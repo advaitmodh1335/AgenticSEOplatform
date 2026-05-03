@@ -1,6 +1,10 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.routes import health, projects, competitors
+from app.db.database import engine
+from app.db.models import Base
+
+Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="Agentic SEO Platform API")
 

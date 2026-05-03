@@ -7,6 +7,7 @@ import {
   getProjects,
   createCompetitor,
   scrapeCompetitor,
+  getScrapes,
 } from "@/lib/api";
 
 type Project = {
@@ -31,11 +32,21 @@ export default function Home() {
   const [competitorUrl, setCompetitorUrl] = useState("");
 
   const [scrapeResult, setScrapeResult] = useState<any>(null);
+  const [scrapeHistory, setScrapeHistory] = useState<any[]>([]);
 
   async function loadProjects() {
     try {
       const data = await getProjects();
       setProjects(data);
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
+  async function loadScrapes() {
+    try {
+      const data = await getScrapes();
+      setScrapeHistory(data);
     } catch (error) {
       console.error(error);
     }
@@ -53,6 +64,7 @@ export default function Home() {
 
     fetchHealth();
     loadProjects();
+    loadScrapes();
   }, []);
 
   async function handleCreateProject(e: React.FormEvent) {
@@ -103,6 +115,7 @@ export default function Home() {
     try {
       const data = await scrapeCompetitor(competitorUrl);
       setScrapeResult(data);
+      await loadScrapes();
     } catch (error) {
       console.error(error);
       alert("Failed to scrape competitor");
@@ -241,6 +254,28 @@ export default function Home() {
                 ))}
               </ul>
             </div>
+          </div>
+        )}
+
+        {scrapeHistory.length > 0 && (
+          <div className="border rounded-lg p-4 mt-4 space-y-3">
+            <h3 className="text-xl font-semibold">Saved Scrape History</h3>
+
+            <ul className="space-y-3">
+              {scrapeHistory.map((scrape) => (
+                <li key={scrape.id} className="border rounded-lg p-3">
+                  <p>
+                    <strong>Title:</strong> {scrape.title}
+                  </p>
+                  <p>
+                    <strong>URL:</strong> {scrape.url}
+                  </p>
+                  <p>
+                    <strong>Meta Description:</strong> {scrape.meta_description}
+                  </p>
+                </li>
+              ))}
+            </ul>
           </div>
         )}
       </section>

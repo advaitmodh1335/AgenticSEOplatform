@@ -43,17 +43,27 @@ export async function createCompetitor(data: {
   return response.json();
 }
 
-export async function scrapeCompetitor(url: string) {
+export async function scrapeCompetitor(url: string, competitor_id?: number) {
   const response = await fetch(`${API_BASE_URL}/competitors/scrape`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ url }),
+    body: JSON.stringify({ url, competitor_id }),
   });
 
   if (!response.ok) {
     throw new Error("Failed to scrape competitor URL");
+  }
+
+  return response.json();
+}
+
+export async function getScrapes() {
+  const response = await fetch(`${API_BASE_URL}/competitors/scrapes`);
+
+  if (!response.ok) {
+    throw new Error("Failed to fetch scrape history");
   }
 
   return response.json();

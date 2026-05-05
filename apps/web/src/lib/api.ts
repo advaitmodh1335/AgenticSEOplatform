@@ -113,3 +113,35 @@ export async function getDocuments() {
 
   return response.json();
 }
+
+export async function buildRagIndex(project_id: number) {
+  const response = await fetch(`${API_BASE_URL}/rag/index`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ project_id }),
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to build RAG index");
+  }
+
+  return response.json();
+}
+
+export async function queryRag(data: { query: string; top_k?: number }) {
+  const response = await fetch(`${API_BASE_URL}/rag/query`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(data),
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to query RAG");
+  }
+
+  return response.json();
+}

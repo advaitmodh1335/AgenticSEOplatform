@@ -11,6 +11,8 @@ import {
   getCompetitors,
   createDocument,
   getDocuments,
+  buildRagIndex,
+  queryRag,
 } from "@/lib/api";
 
 type Project = {
@@ -45,6 +47,10 @@ export default function Home() {
   const [documentContent, setDocumentContent] = useState("");
   const [documentProjectId, setDocumentProjectId] = useState("");
 
+  const [ragProjectId, setRagProjectId] = useState("");
+  const [ragQuery, setRagQuery] = useState("");
+  const [ragResults, setRagResults] = useState<any[]>([]);
+
   async function loadProjects() {
     try {
       const data = await getProjects();
@@ -73,13 +79,13 @@ export default function Home() {
   }
 
   async function loadDocuments() {
-  try {
-    const data = await getDocuments();
-    setDocuments(data);
-  } catch (error) {
-    console.error(error);
+    try {
+      const data = await getDocuments();
+      setDocuments(data);
+    } catch (error) {
+      console.error(error);
+    }
   }
-}
 
   useEffect(() => {
     async function fetchHealth() {
@@ -155,7 +161,8 @@ export default function Home() {
   }
 
   async function handleCreateDocument(e: React.FormEvent) {
-  e.preventDefault();
+    e.preventDefault();
+
     try {
       await createDocument({
         project_id: Number(documentProjectId),
@@ -173,6 +180,29 @@ export default function Home() {
     } catch (error) {
       console.error(error);
       alert("Failed to add document");
+    }
+  }
+
+  async function handleBuildIndex() {
+    try {
+      const result = await buildRagIndex(Number(ragProjectId));
+      alert(`RAG index built successfully with ${result.count} chunks`);
+    } catch (error) {
+      console.error(error);
+      alert("Failed to build RAG index");
+    }
+  }
+
+  async function handleQueryRag() {
+    try {
+      const result = await queryRag({
+        query: ragQuery,
+        top_k: 5,
+      });
+      setRagResults(result.results || []);
+    } catch (error) {
+      console.error(error);
+      alert("Failed to query RAG");
     }
   }
 
@@ -311,6 +341,59 @@ export default function Home() {
                 </li>
               ))}
             </ul>
+          </div>
+        )}
+      </section>
+
+      <section className="border rounded-xl p-6 space-y-4">
+        <h2 className="text-2xl font-semibold">RAG Testing</h2>
+
+        <select
+          className="w-full border rounded-lg p-3"
+          value={ragProjectId}
+          onChange={(e) => setRagProjectId(e.target.value)}
+        >
+          <option value="">Select Project</option>
+          {projects.map((project) => (
+            <option key={project.id} value={project.id}>
+              {project.name}
+            </option>
+          ))}
+        </select>
+
+        <button
+          type="button"
+          onClick={handleBuildIndex}
+          className="bg-black text-white px-5 py-3 rounded-lg"
+        >
+          Build RAG Index
+        </button>
+
+        <input
+          className="w-full border rounded-lg p-3"
+          placeholder="Ask a question about your content"
+          value={ragQuery}
+          onChange={(e) => setRagQuery(e.target.value)}
+        />
+
+        <button
+          type="button"
+          onClick={handleQueryRag}
+          className="bg-blue-600 text-white px-5 py-3 rounded-lg"
+        >
+          Query RAG
+        </button>
+
+        {ragResults.length > 0 && (
+          <div className="space-y-3">
+            <h3 className="text-xl font-semibold">Retrieved Chunks</h3>
+            {ragResults.map((result, index) => (
+              <div key={index} className="border rounded-lg p-4">
+                <p><strong>Title:</strong> {result.title}</p>
+                <p><strong>Source Type:</strong> {result.source_type}</p>
+                <p><strong>Text:</strong> {result.text}</p>
+              </div>
+            ))}
           </div>
         )}
       </section>

@@ -40,3 +40,12 @@ class KnowledgeDocument(Base):
     title = Column(String, nullable=False)
     doc_type = Column(String, nullable=False)
     content = Column(Text, nullable=False)
+
+class DocumentChunk(Base):
+    __tablename__ = "document_chunks"
+
+    id = Column(Integer, primary_key=True, index=True)
+    project_id = Column(Integer, nullable=False)
+    source_type = Column(String, nullable=False)   # "knowledge_document" or "competitor_scrape"
+    source_id = Column(Integer, nullable=False)
+    chunk_text = Column(Text, nullable=False)

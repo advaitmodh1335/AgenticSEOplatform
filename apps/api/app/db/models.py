@@ -31,3 +31,12 @@ class CompetitorScrape(Base):
     meta_description = Column(Text, nullable=True)
     headings = Column(Text, nullable=True)
     content_preview = Column(Text, nullable=True)
+
+class KnowledgeDocument(Base):
+    __tablename__ = "knowledge_documents"
+
+    id = Column(Integer, primary_key=True, index=True)
+    project_id = Column(Integer, ForeignKey("projects.id"), nullable=False)
+    title = Column(String, nullable=False)
+    doc_type = Column(String, nullable=False)
+    content = Column(Text, nullable=False)

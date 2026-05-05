@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.routes import health, projects, competitors
+from app.routes import health, projects, competitors, documents
 from app.db.database import engine
 from app.db.models import Base
 
@@ -22,3 +22,4 @@ app.add_middleware(
 app.include_router(health.router)
 app.include_router(projects.router)
 app.include_router(competitors.router)
+app.include_router(documents.router)

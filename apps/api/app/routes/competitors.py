@@ -53,6 +53,19 @@ def list_competitors(db: Session = Depends(get_db)):
         for competitor in competitors
     ]
 
+@router.get("/project/{project_id}")
+def list_competitors_by_project(project_id: int, db: Session = Depends(get_db)):
+    competitors = db.query(Competitor).filter(Competitor.project_id == project_id).all()
+
+    return [
+        {
+            "id": competitor.id,
+            "project_id": competitor.project_id,
+            "name": competitor.name,
+            "url": competitor.url,
+        }
+        for competitor in competitors
+    ]
 
 @router.post("/scrape")
 def scrape_competitor(data: ScrapeRequest, db: Session = Depends(get_db)):

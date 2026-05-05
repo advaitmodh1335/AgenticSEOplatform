@@ -68,3 +68,48 @@ export async function getScrapes() {
 
   return response.json();
 }
+
+export async function getCompetitors(projectId?: number) {
+  const url = projectId
+    ? `${API_BASE_URL}/competitors/project/${projectId}`
+    : `${API_BASE_URL}/competitors`;
+
+  const response = await fetch(url);
+
+  if (!response.ok) {
+    throw new Error("Failed to fetch competitors");
+  }
+
+  return response.json();
+}
+
+export async function createDocument(data: {
+  project_id: number;
+  title: string;
+  doc_type: string;
+  content: string;
+}) {
+  const response = await fetch(`${API_BASE_URL}/documents`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(data),
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to create document");
+  }
+
+  return response.json();
+}
+
+export async function getDocuments() {
+  const response = await fetch(`${API_BASE_URL}/documents`);
+
+  if (!response.ok) {
+    throw new Error("Failed to fetch documents");
+  }
+
+  return response.json();
+}

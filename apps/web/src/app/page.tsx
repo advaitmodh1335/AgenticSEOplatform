@@ -8,6 +8,9 @@ import {
   createCompetitor,
   scrapeCompetitor,
   getScrapes,
+  getCompetitors,
+  createDocument,
+  getDocuments,
 } from "@/lib/api";
 
 type Project = {
@@ -34,6 +37,14 @@ export default function Home() {
   const [scrapeResult, setScrapeResult] = useState<any>(null);
   const [scrapeHistory, setScrapeHistory] = useState<any[]>([]);
 
+  const [competitors, setCompetitors] = useState<any[]>([]);
+
+  const [documents, setDocuments] = useState<any[]>([]);
+  const [documentTitle, setDocumentTitle] = useState("");
+  const [documentType, setDocumentType] = useState("style_guide");
+  const [documentContent, setDocumentContent] = useState("");
+  const [documentProjectId, setDocumentProjectId] = useState("");
+
   async function loadProjects() {
     try {
       const data = await getProjects();
@@ -52,6 +63,24 @@ export default function Home() {
     }
   }
 
+  async function loadCompetitors(projectId?: number) {
+    try {
+      const data = await getCompetitors(projectId);
+      setCompetitors(data);
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
+  async function loadDocuments() {
+  try {
+    const data = await getDocuments();
+    setDocuments(data);
+  } catch (error) {
+    console.error(error);
+  }
+}
+
   useEffect(() => {
     async function fetchHealth() {
       try {
@@ -65,6 +94,8 @@ export default function Home() {
     fetchHealth();
     loadProjects();
     loadScrapes();
+    loadCompetitors();
+    loadDocuments();
   }, []);
 
   async function handleCreateProject(e: React.FormEvent) {
@@ -104,6 +135,7 @@ export default function Home() {
 
       setCompetitorName("");
       setCompetitorUrl("");
+      await loadCompetitors();
       alert("Competitor added successfully");
     } catch (error) {
       console.error(error);
@@ -119,6 +151,28 @@ export default function Home() {
     } catch (error) {
       console.error(error);
       alert("Failed to scrape competitor");
+    }
+  }
+
+  async function handleCreateDocument(e: React.FormEvent) {
+  e.preventDefault();
+    try {
+      await createDocument({
+        project_id: Number(documentProjectId),
+        title: documentTitle,
+        doc_type: documentType,
+        content: documentContent,
+      });
+
+      setDocumentTitle("");
+      setDocumentType("style_guide");
+      setDocumentContent("");
+      setDocumentProjectId("");
+      await loadDocuments();
+      alert("Document added successfully");
+    } catch (error) {
+      console.error(error);
+      alert("Failed to add document");
     }
   }
 
@@ -177,6 +231,87 @@ export default function Home() {
               </li>
             ))}
           </ul>
+        )}
+      </section>
+
+      <section className="border rounded-xl p-6 space-y-4">
+        <h2 className="text-2xl font-semibold">Saved Competitors</h2>
+
+        {competitors.length === 0 ? (
+          <p className="text-gray-600">No competitors added yet.</p>
+        ) : (
+          <ul className="space-y-3">
+            {competitors.map((competitor) => (
+              <li key={competitor.id} className="border rounded-lg p-4">
+                <p><strong>Name:</strong> {competitor.name}</p>
+                <p><strong>URL:</strong> {competitor.url}</p>
+                <p><strong>Project ID:</strong> {competitor.project_id}</p>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+
+      <section className="border rounded-xl p-6 space-y-4">
+        <h2 className="text-2xl font-semibold">Knowledge Base Documents</h2>
+
+        <form onSubmit={handleCreateDocument} className="space-y-4">
+          <select
+            className="w-full border rounded-lg p-3"
+            value={documentProjectId}
+            onChange={(e) => setDocumentProjectId(e.target.value)}
+          >
+            <option value="">Select Project</option>
+            {projects.map((project) => (
+              <option key={project.id} value={project.id}>
+                {project.name}
+              </option>
+            ))}
+          </select>
+
+          <input
+            className="w-full border rounded-lg p-3"
+            placeholder="Document Title"
+            value={documentTitle}
+            onChange={(e) => setDocumentTitle(e.target.value)}
+          />
+
+          <select
+            className="w-full border rounded-lg p-3"
+            value={documentType}
+            onChange={(e) => setDocumentType(e.target.value)}
+          >
+            <option value="style_guide">Style Guide</option>
+            <option value="seo_guidelines">SEO Guidelines</option>
+            <option value="past_blog">Past Blog</option>
+            <option value="product_info">Product Info</option>
+          </select>
+
+          <textarea
+            className="w-full border rounded-lg p-3 min-h-[160px]"
+            placeholder="Paste document content here"
+            value={documentContent}
+            onChange={(e) => setDocumentContent(e.target.value)}
+          />
+
+          <button className="bg-black text-white px-5 py-3 rounded-lg">
+            Add Document
+          </button>
+        </form>
+
+        {documents.length > 0 && (
+          <div className="space-y-3">
+            <h3 className="text-xl font-semibold">Saved Documents</h3>
+            <ul className="space-y-3">
+              {documents.map((doc) => (
+                <li key={doc.id} className="border rounded-lg p-4">
+                  <p><strong>Title:</strong> {doc.title}</p>
+                  <p><strong>Type:</strong> {doc.doc_type}</p>
+                  <p><strong>Project ID:</strong> {doc.project_id}</p>
+                </li>
+              ))}
+            </ul>
+          </div>
         )}
       </section>
 

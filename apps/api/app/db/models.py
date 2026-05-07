@@ -25,6 +25,7 @@ class CompetitorScrape(Base):
     __tablename__ = "competitor_scrapes"
 
     id = Column(Integer, primary_key=True, index=True)
+    project_id = Column(Integer, ForeignKey("projects.id"), nullable=False)
     competitor_id = Column(Integer, ForeignKey("competitors.id"), nullable=True)
     url = Column(String, nullable=False)
     title = Column(String, nullable=False)

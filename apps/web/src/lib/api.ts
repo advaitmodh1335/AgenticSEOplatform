@@ -43,13 +43,17 @@ export async function createCompetitor(data: {
   return response.json();
 }
 
-export async function scrapeCompetitor(url: string, competitor_id?: number) {
+export async function scrapeCompetitor(
+  url: string,
+  project_id: number,
+  competitor_id?: number
+) {
   const response = await fetch(`${API_BASE_URL}/competitors/scrape`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ url, competitor_id }),
+    body: JSON.stringify({ url, project_id, competitor_id }),
   });
 
   if (!response.ok) {
@@ -141,6 +145,42 @@ export async function queryRag(data: { query: string; top_k?: number }) {
 
   if (!response.ok) {
     throw new Error("Failed to query RAG");
+  }
+
+  return response.json();
+}
+
+export async function getTopicSuggestions(project_id: number) {
+  const response = await fetch(`${API_BASE_URL}/strategy/topics`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ project_id }),
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to fetch topic suggestions");
+  }
+
+  return response.json();
+}
+
+export async function generateOutline(data: {
+  project_id: number;
+  topic: string;
+  keyword: string;
+}) {
+  const response = await fetch(`${API_BASE_URL}/content/outline`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(data),
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to generate outline");
   }
 
   return response.json();

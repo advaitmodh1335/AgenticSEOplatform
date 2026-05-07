@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.routes import health, projects, competitors, documents, rag
+from app.routes import health, projects, competitors, documents, rag, strategy, content
 from app.db.database import engine
 from app.db.models import Base
 
@@ -24,3 +24,5 @@ app.include_router(projects.router)
 app.include_router(competitors.router)
 app.include_router(documents.router)
 app.include_router(rag.router)
+app.include_router(strategy.router)
+app.include_router(content.router)

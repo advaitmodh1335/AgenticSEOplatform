@@ -13,6 +13,8 @@ import {
   getDocuments,
   buildRagIndex,
   queryRag,
+  getTopicSuggestions,
+  generateOutline,
 } from "@/lib/api";
 
 type Project = {
@@ -50,6 +52,14 @@ export default function Home() {
   const [ragProjectId, setRagProjectId] = useState("");
   const [ragQuery, setRagQuery] = useState("");
   const [ragResults, setRagResults] = useState<any[]>([]);
+
+  const [topicProjectId, setTopicProjectId] = useState("");
+  const [topicSuggestions, setTopicSuggestions] = useState<any[]>([]);
+
+  const [outlineProjectId, setOutlineProjectId] = useState("");
+  const [outlineTopic, setOutlineTopic] = useState("");
+  const [outlineKeyword, setOutlineKeyword] = useState("");
+  const [generatedOutline, setGeneratedOutline] = useState<any>(null);
 
   async function loadProjects() {
     try {
@@ -151,7 +161,16 @@ export default function Home() {
 
   async function handleScrapeCompetitor() {
     try {
-      const data = await scrapeCompetitor(competitorUrl);
+      if (!selectedProjectId) {
+        alert("Please select a project before scraping");
+        return;
+      }
+
+      const data = await scrapeCompetitor(
+        competitorUrl,
+        Number(selectedProjectId)
+      );
+
       setScrapeResult(data);
       await loadScrapes();
     } catch (error) {
@@ -203,6 +222,31 @@ export default function Home() {
     } catch (error) {
       console.error(error);
       alert("Failed to query RAG");
+    }
+  }
+
+  async function handleGetTopicSuggestions() {
+    try {
+      const result = await getTopicSuggestions(Number(topicProjectId));
+      setTopicSuggestions(result.topics || []);
+    } catch (error) {
+      console.error(error);
+      alert("Failed to get topic suggestions");
+    }
+  }
+
+  async function handleGenerateOutline() {
+    try {
+      const result = await generateOutline({
+        project_id: Number(outlineProjectId),
+        topic: outlineTopic,
+        keyword: outlineKeyword,
+      });
+
+      setGeneratedOutline(result.outline);
+    } catch (error) {
+      console.error(error);
+      alert("Failed to generate outline");
     }
   }
 
@@ -394,6 +438,131 @@ export default function Home() {
                 <p><strong>Text:</strong> {result.text}</p>
               </div>
             ))}
+          </div>
+        )}
+      </section>
+
+      <section className="border rounded-xl p-6 space-y-4">
+        <h2 className="text-2xl font-semibold">Topic Suggestions</h2>
+
+        <select
+          className="w-full border rounded-lg p-3"
+          value={topicProjectId}
+          onChange={(e) => setTopicProjectId(e.target.value)}
+        >
+          <option value="">Select Project</option>
+          {projects.map((project) => (
+            <option key={project.id} value={project.id}>
+              {project.name}
+            </option>
+          ))}
+        </select>
+
+        <button
+          type="button"
+          onClick={handleGetTopicSuggestions}
+          className="bg-black text-white px-5 py-3 rounded-lg"
+        >
+          Generate Topic Suggestions
+        </button>
+
+        {topicSuggestions.length > 0 && (
+          <div className="space-y-3">
+            <h3 className="text-xl font-semibold">Suggested Topics</h3>
+            <ul className="space-y-3">
+              {topicSuggestions.map((topic, index) => (
+                <li key={index} className="border rounded-lg p-4">
+                  <p><strong>Title:</strong> {topic.title}</p>
+                  <p><strong>Keyword:</strong> {topic.keyword}</p>
+                  <p><strong>Reason:</strong> {topic.reason}</p>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </section>
+
+      <section className="border rounded-xl p-6 space-y-4">
+        <h2 className="text-2xl font-semibold">Blog Outline Generation</h2>
+
+        <select
+          className="w-full border rounded-lg p-3"
+          value={outlineProjectId}
+          onChange={(e) => setOutlineProjectId(e.target.value)}
+        >
+          <option value="">Select Project</option>
+          {projects.map((project) => (
+            <option key={project.id} value={project.id}>
+              {project.name}
+            </option>
+          ))}
+        </select>
+
+        <input
+          className="w-full border rounded-lg p-3"
+          placeholder="Topic"
+          value={outlineTopic}
+          onChange={(e) => setOutlineTopic(e.target.value)}
+        />
+
+        <input
+          className="w-full border rounded-lg p-3"
+          placeholder="Primary Keyword"
+          value={outlineKeyword}
+          onChange={(e) => setOutlineKeyword(e.target.value)}
+        />
+
+        <button
+          type="button"
+          onClick={handleGenerateOutline}
+          className="bg-black text-white px-5 py-3 rounded-lg"
+        >
+          Generate Blog Outline
+        </button>
+
+        {generatedOutline && (
+          <div className="border rounded-lg p-4 space-y-4">
+            <h3 className="text-xl font-semibold">Generated Outline</h3>
+
+            <p><strong>Title:</strong> {generatedOutline.title}</p>
+            <p><strong>Meta Title:</strong> {generatedOutline.meta_title}</p>
+            <p><strong>Meta Description:</strong> {generatedOutline.meta_description}</p>
+            <p><strong>Intro:</strong> {generatedOutline.intro}</p>
+
+            <div>
+              <strong>Sections:</strong>
+              <ul className="list-disc ml-6">
+                {generatedOutline.sections.map((section: string, index: number) => (
+                  <li key={index}>{section}</li>
+                ))}
+              </ul>
+            </div>
+
+            <div>
+              <strong>FAQ:</strong>
+              <ul className="list-disc ml-6">
+                {generatedOutline.faq.map((item: string, index: number) => (
+                  <li key={index}>{item}</li>
+                ))}
+              </ul>
+            </div>
+
+            <p><strong>CTA:</strong> {generatedOutline.cta}</p>
+
+            {generatedOutline.retrieved_context?.length > 0 && (
+              <div>
+                <strong>Retrieved Context Used:</strong>
+                <ul className="space-y-2 mt-2">
+                  {generatedOutline.retrieved_context.map((chunk: any, index: number) => (
+                    <li key={index} className="border rounded-lg p-3">
+                      <p><strong>Title:</strong> {chunk.title}</p>
+                      <p><strong>Source Type:</strong> {chunk.source_type}</p>
+                      <p><strong>Text:</strong> {chunk.text}</p>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
           </div>
         )}
       </section>

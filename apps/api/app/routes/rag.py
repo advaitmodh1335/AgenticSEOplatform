@@ -44,13 +44,16 @@ def build_index(data: IndexRequest, db: Session = Depends(get_db)):
             texts.append(chunk)
             metadata.append({
                 "chunk_id": chunk_row.id,
+                "project_id": data.project_id,
                 "source_type": "knowledge_document",
                 "source_id": doc.id,
                 "text": chunk,
                 "title": doc.title,
             })
 
-    scrapes = db.query(CompetitorScrape).all()
+    scrapes = db.query(CompetitorScrape).filter(
+        CompetitorScrape.project_id == data.project_id
+    ).all()
     for scrape in scrapes:
         combined_text = " ".join([
             scrape.title or "",
@@ -73,6 +76,7 @@ def build_index(data: IndexRequest, db: Session = Depends(get_db)):
             texts.append(chunk)
             metadata.append({
                 "chunk_id": chunk_row.id,
+                "project_id": data.project_id,
                 "source_type": "competitor_scrape",
                 "source_id": scrape.id,
                 "text": chunk,

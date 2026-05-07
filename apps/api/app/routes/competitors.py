@@ -17,6 +17,7 @@ class CompetitorCreate(BaseModel):
 
 class ScrapeRequest(BaseModel):
     url: str
+    project_id: int
     competitor_id: int | None = None
 
 
@@ -53,6 +54,7 @@ def list_competitors(db: Session = Depends(get_db)):
         for competitor in competitors
     ]
 
+
 @router.get("/project/{project_id}")
 def list_competitors_by_project(project_id: int, db: Session = Depends(get_db)):
     competitors = db.query(Competitor).filter(Competitor.project_id == project_id).all()
@@ -67,12 +69,14 @@ def list_competitors_by_project(project_id: int, db: Session = Depends(get_db)):
         for competitor in competitors
     ]
 
+
 @router.post("/scrape")
 def scrape_competitor(data: ScrapeRequest, db: Session = Depends(get_db)):
     try:
         scraped = scrape_url(data.url)
 
         new_scrape = CompetitorScrape(
+            project_id=data.project_id,
             competitor_id=data.competitor_id,
             url=scraped["url"],
             title=scraped["title"],
@@ -87,6 +91,7 @@ def scrape_competitor(data: ScrapeRequest, db: Session = Depends(get_db)):
 
         return {
             "id": new_scrape.id,
+            "project_id": new_scrape.project_id,
             "competitor_id": new_scrape.competitor_id,
             "url": new_scrape.url,
             "title": new_scrape.title,
@@ -106,6 +111,7 @@ def list_scrapes(db: Session = Depends(get_db)):
     return [
         {
             "id": scrape.id,
+            "project_id": scrape.project_id,
             "competitor_id": scrape.competitor_id,
             "url": scrape.url,
             "title": scrape.title,

@@ -185,3 +185,24 @@ export async function generateOutline(data: {
 
   return response.json();
 }
+
+export async function generateDraft(data: {
+  project_id: number;
+  topic: string;
+  keyword: string;
+  outline: any;
+}) {
+  const response = await fetch(`${API_BASE_URL}/content/draft`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(data),
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to generate draft");
+  }
+
+  return response.json();
+}

@@ -15,6 +15,7 @@ import {
   queryRag,
   getTopicSuggestions,
   generateOutline,
+  generateDraft,
 } from "@/lib/api";
 
 type Project = {
@@ -60,6 +61,8 @@ export default function Home() {
   const [outlineTopic, setOutlineTopic] = useState("");
   const [outlineKeyword, setOutlineKeyword] = useState("");
   const [generatedOutline, setGeneratedOutline] = useState<any>(null);
+
+  const [generatedDraft, setGeneratedDraft] = useState<any>(null);
 
   async function loadProjects() {
     try {
@@ -244,9 +247,31 @@ export default function Home() {
       });
 
       setGeneratedOutline(result.outline);
+      setGeneratedDraft(null);
     } catch (error) {
       console.error(error);
       alert("Failed to generate outline");
+    }
+  }
+
+  async function handleGenerateDraft() {
+    try {
+      if (!generatedOutline) {
+        alert("Please generate an outline first");
+        return;
+      }
+
+      const result = await generateDraft({
+        project_id: Number(outlineProjectId),
+        topic: outlineTopic,
+        keyword: outlineKeyword,
+        outline: generatedOutline,
+      });
+
+      setGeneratedDraft(result.draft);
+    } catch (error) {
+      console.error(error);
+      alert("Failed to generate draft");
     }
   }
 
@@ -512,13 +537,23 @@ export default function Home() {
           onChange={(e) => setOutlineKeyword(e.target.value)}
         />
 
-        <button
-          type="button"
-          onClick={handleGenerateOutline}
-          className="bg-black text-white px-5 py-3 rounded-lg"
-        >
-          Generate Blog Outline
-        </button>
+        <div className="flex gap-3">
+          <button
+            type="button"
+            onClick={handleGenerateOutline}
+            className="bg-black text-white px-5 py-3 rounded-lg"
+          >
+            Generate Blog Outline
+          </button>
+
+          <button
+            type="button"
+            onClick={handleGenerateDraft}
+            className="bg-blue-600 text-white px-5 py-3 rounded-lg"
+          >
+            Generate Full Blog Draft
+          </button>
+        </div>
 
         {generatedOutline && (
           <div className="border rounded-lg p-4 space-y-4">
@@ -564,6 +599,50 @@ export default function Home() {
               </div>
             )}
           </div>
+        )}
+
+        {generatedDraft && (
+          <section className="border rounded-lg p-4 space-y-4">
+            <h3 className="text-xl font-semibold">Generated Blog Draft</h3>
+
+            <p><strong>Title:</strong> {generatedDraft.title}</p>
+            <p><strong>Meta Title:</strong> {generatedDraft.meta_title}</p>
+            <p><strong>Meta Description:</strong> {generatedDraft.meta_description}</p>
+
+            <div>
+              <strong>Introduction:</strong>
+              <p className="mt-2">{generatedDraft.intro}</p>
+            </div>
+
+            <div>
+              <strong>Sections:</strong>
+              <div className="space-y-4 mt-2">
+                {generatedDraft.sections.map((section: any, index: number) => (
+                  <div key={index} className="border rounded-lg p-3">
+                    <p><strong>{section.heading}</strong></p>
+                    <p className="mt-2">{section.content}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <strong>FAQ:</strong>
+              <div className="space-y-4 mt-2">
+                {generatedDraft.faq.map((item: any, index: number) => (
+                  <div key={index} className="border rounded-lg p-3">
+                    <p><strong>Q:</strong> {item.question}</p>
+                    <p className="mt-2"><strong>A:</strong> {item.answer}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <strong>CTA:</strong>
+              <p className="mt-2">{generatedDraft.cta}</p>
+            </div>
+          </section>
         )}
       </section>
 

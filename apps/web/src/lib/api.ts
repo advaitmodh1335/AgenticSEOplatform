@@ -206,3 +206,41 @@ export async function generateDraft(data: {
 
   return response.json();
 }
+
+export async function analyzeSeo(data: {
+  keyword: string;
+  draft: any;
+}) {
+  const response = await fetch(`${API_BASE_URL}/seo/analyze`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(data),
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to analyze SEO");
+  }
+
+  return response.json();
+}
+
+export async function optimizeSeo(data: {
+  keyword: string;
+  draft: any;
+}) {
+  const response = await fetch(`${API_BASE_URL}/seo/optimize`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(data),
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to optimize SEO");
+  }
+
+  return response.json();
+}

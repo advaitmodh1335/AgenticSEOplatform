@@ -16,6 +16,8 @@ import {
   getTopicSuggestions,
   generateOutline,
   generateDraft,
+  analyzeSeo,
+  optimizeSeo,
 } from "@/lib/api";
 
 type Project = {
@@ -63,6 +65,9 @@ export default function Home() {
   const [generatedOutline, setGeneratedOutline] = useState<any>(null);
 
   const [generatedDraft, setGeneratedDraft] = useState<any>(null);
+
+  const [seoAnalysis, setSeoAnalysis] = useState<any>(null);
+  const [optimizedDraft, setOptimizedDraft] = useState<any>(null);
 
   async function loadProjects() {
     try {
@@ -248,6 +253,8 @@ export default function Home() {
 
       setGeneratedOutline(result.outline);
       setGeneratedDraft(null);
+      setSeoAnalysis(null);
+      setOptimizedDraft(null);
     } catch (error) {
       console.error(error);
       alert("Failed to generate outline");
@@ -269,9 +276,49 @@ export default function Home() {
       });
 
       setGeneratedDraft(result.draft);
+      setSeoAnalysis(null);
+      setOptimizedDraft(null);
     } catch (error) {
       console.error(error);
       alert("Failed to generate draft");
+    }
+  }
+
+  async function handleAnalyzeSeo() {
+    try {
+      if (!generatedDraft) {
+        alert("Please generate a draft first");
+        return;
+      }
+
+      const result = await analyzeSeo({
+        keyword: outlineKeyword,
+        draft: generatedDraft,
+      });
+
+      setSeoAnalysis(result);
+    } catch (error) {
+      console.error(error);
+      alert("Failed to analyze SEO");
+    }
+  }
+
+  async function handleOptimizeSeo() {
+    try {
+      if (!generatedDraft) {
+        alert("Please generate a draft first");
+        return;
+      }
+
+      const result = await optimizeSeo({
+        keyword: outlineKeyword,
+        draft: generatedDraft,
+      });
+
+      setOptimizedDraft(result.optimized_draft);
+    } catch (error) {
+      console.error(error);
+      alert("Failed to optimize SEO");
     }
   }
 
@@ -642,6 +689,83 @@ export default function Home() {
               <strong>CTA:</strong>
               <p className="mt-2">{generatedDraft.cta}</p>
             </div>
+
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={handleAnalyzeSeo}
+                className="bg-black text-white px-5 py-3 rounded-lg"
+              >
+                Analyze SEO
+              </button>
+
+              <button
+                type="button"
+                onClick={handleOptimizeSeo}
+                className="bg-blue-600 text-white px-5 py-3 rounded-lg"
+              >
+                Optimize Draft
+              </button>
+            </div>
+
+            {seoAnalysis && (
+              <div className="border rounded-lg p-4 space-y-3">
+                <h4 className="text-lg font-semibold">SEO Analysis</h4>
+                <p><strong>SEO Score:</strong> {seoAnalysis.score}</p>
+                <p><strong>Word Count:</strong> {seoAnalysis.word_count}</p>
+                <p><strong>Keyword Count:</strong> {seoAnalysis.keyword_count}</p>
+
+                <div>
+                  <strong>Issues:</strong>
+                  <ul className="list-disc ml-6">
+                    {seoAnalysis.issues.map((issue: string, index: number) => (
+                      <li key={index}>{issue}</li>
+                    ))}
+                  </ul>
+                </div>
+
+                <div>
+                  <strong>Suggestions:</strong>
+                  <ul className="list-disc ml-6">
+                    {seoAnalysis.suggestions.map((suggestion: string, index: number) => (
+                      <li key={index}>{suggestion}</li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            )}
+
+            {optimizedDraft && (
+              <div className="border rounded-lg p-4 space-y-4">
+                <h4 className="text-lg font-semibold">Optimized Draft</h4>
+
+                <p><strong>Title:</strong> {optimizedDraft.title}</p>
+                <p><strong>Meta Title:</strong> {optimizedDraft.meta_title}</p>
+                <p><strong>Meta Description:</strong> {optimizedDraft.meta_description}</p>
+
+                <div>
+                  <strong>Introduction:</strong>
+                  <p className="mt-2">{optimizedDraft.intro}</p>
+                </div>
+
+                <div>
+                  <strong>Sections:</strong>
+                  <div className="space-y-4 mt-2">
+                    {optimizedDraft.sections.map((section: any, index: number) => (
+                      <div key={index} className="border rounded-lg p-3">
+                        <p><strong>{section.heading}</strong></p>
+                        <p className="mt-2">{section.content}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <strong>CTA:</strong>
+                  <p className="mt-2">{optimizedDraft.cta}</p>
+                </div>
+              </div>
+            )}
           </section>
         )}
       </section>

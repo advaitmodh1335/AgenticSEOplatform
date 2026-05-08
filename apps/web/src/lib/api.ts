@@ -304,3 +304,78 @@ export async function generateImagePrompts(data: {
 
   return response.json();
 }
+
+export async function createBlog(data: {
+  project_id: number;
+  title: string;
+  keyword: string;
+  meta_title?: string;
+  meta_description?: string;
+  intro?: string;
+  cta?: string;
+  draft: any;
+}) {
+  const response = await fetch(`${API_BASE_URL}/blogs`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(data),
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to save blog");
+  }
+
+  return response.json();
+}
+
+export async function getBlogs() {
+  const response = await fetch(`${API_BASE_URL}/blogs`);
+
+  if (!response.ok) {
+    throw new Error("Failed to fetch blogs");
+  }
+
+  return response.json();
+}
+
+export async function getBlog(blogId: number) {
+  const response = await fetch(`${API_BASE_URL}/blogs/${blogId}`);
+
+  if (!response.ok) {
+    throw new Error("Failed to fetch blog");
+  }
+
+  return response.json();
+}
+
+export async function createBlogVersion(data: {
+  blog_id: number;
+  version_label: string;
+  draft: any;
+}) {
+  const response = await fetch(`${API_BASE_URL}/blogs/version`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(data),
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to save blog version");
+  }
+
+  return response.json();
+}
+
+export async function getBlogVersions(blogId: number) {
+  const response = await fetch(`${API_BASE_URL}/blogs/${blogId}/versions`);
+
+  if (!response.ok) {
+    throw new Error("Failed to fetch blog versions");
+  }
+
+  return response.json();
+}

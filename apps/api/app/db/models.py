@@ -50,3 +50,25 @@ class DocumentChunk(Base):
     source_type = Column(String, nullable=False)   # "knowledge_document" or "competitor_scrape"
     source_id = Column(Integer, nullable=False)
     chunk_text = Column(Text, nullable=False)
+
+class Blog(Base):
+    __tablename__ = "blogs"
+
+    id = Column(Integer, primary_key=True, index=True)
+    project_id = Column(Integer, ForeignKey("projects.id"), nullable=False)
+    title = Column(String, nullable=False)
+    keyword = Column(String, nullable=False)
+    meta_title = Column(Text, nullable=True)
+    meta_description = Column(Text, nullable=True)
+    intro = Column(Text, nullable=True)
+    cta = Column(Text, nullable=True)
+    draft_json = Column(Text, nullable=False)
+
+
+class BlogVersion(Base):
+    __tablename__ = "blog_versions"
+
+    id = Column(Integer, primary_key=True, index=True)
+    blog_id = Column(Integer, ForeignKey("blogs.id"), nullable=False)
+    version_label = Column(String, nullable=False)
+    draft_json = Column(Text, nullable=False)

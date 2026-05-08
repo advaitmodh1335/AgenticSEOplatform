@@ -21,6 +21,10 @@ import {
   suggestInternalLinks,
   generateHeadlines,
   generateImagePrompts,
+  createBlog,
+  getBlogs,
+  createBlogVersion,
+  getBlogVersions,
 } from "@/lib/api";
 
 type Project = {
@@ -73,10 +77,12 @@ export default function Home() {
   const [optimizedDraft, setOptimizedDraft] = useState<any>(null);
 
   const [linkSuggestions, setLinkSuggestions] = useState<any[]>([]);
-
   const [headlineVariants, setHeadlineVariants] = useState<any[]>([]);
-
   const [imagePrompts, setImagePrompts] = useState<any[]>([]);
+
+  const [savedBlogs, setSavedBlogs] = useState<any[]>([]);
+  const [selectedBlogId, setSelectedBlogId] = useState("");
+  const [blogVersions, setBlogVersions] = useState<any[]>([]);
 
   async function loadProjects() {
     try {
@@ -114,6 +120,24 @@ export default function Home() {
     }
   }
 
+  async function loadBlogs() {
+    try {
+      const data = await getBlogs();
+      setSavedBlogs(data);
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
+  async function loadBlogVersions(blogId: number) {
+    try {
+      const data = await getBlogVersions(blogId);
+      setBlogVersions(data);
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
   useEffect(() => {
     async function fetchHealth() {
       try {
@@ -129,6 +153,7 @@ export default function Home() {
     loadScrapes();
     loadCompetitors();
     loadDocuments();
+    loadBlogs();
   }, []);
 
   async function handleCreateProject(e: React.FormEvent) {
@@ -264,6 +289,9 @@ export default function Home() {
       setGeneratedDraft(null);
       setSeoAnalysis(null);
       setOptimizedDraft(null);
+      setLinkSuggestions([]);
+      setHeadlineVariants([]);
+      setImagePrompts([]);
     } catch (error) {
       console.error(error);
       alert("Failed to generate outline");
@@ -287,6 +315,9 @@ export default function Home() {
       setGeneratedDraft(result.draft);
       setSeoAnalysis(null);
       setOptimizedDraft(null);
+      setLinkSuggestions([]);
+      setHeadlineVariants([]);
+      setImagePrompts([]);
     } catch (error) {
       console.error(error);
       alert("Failed to generate draft");
@@ -392,6 +423,58 @@ export default function Home() {
     } catch (error) {
       console.error(error);
       alert("Failed to generate image prompts");
+    }
+  }
+
+  async function handleSaveBlog() {
+    try {
+      if (!generatedDraft) {
+        alert("Please generate a draft first");
+        return;
+      }
+
+      await createBlog({
+        project_id: Number(outlineProjectId),
+        title: generatedDraft.title,
+        keyword: outlineKeyword,
+        meta_title: generatedDraft.meta_title,
+        meta_description: generatedDraft.meta_description,
+        intro: generatedDraft.intro,
+        cta: generatedDraft.cta,
+        draft: generatedDraft,
+      });
+
+      await loadBlogs();
+      alert("Blog saved successfully");
+    } catch (error) {
+      console.error(error);
+      alert("Failed to save blog");
+    }
+  }
+
+  async function handleSaveOptimizedVersion() {
+    try {
+      if (!optimizedDraft) {
+        alert("Please optimize the draft first");
+        return;
+      }
+
+      if (!selectedBlogId) {
+        alert("Please select a saved blog first");
+        return;
+      }
+
+      await createBlogVersion({
+        blog_id: Number(selectedBlogId),
+        version_label: "optimized_draft",
+        draft: optimizedDraft,
+      });
+
+      await loadBlogVersions(Number(selectedBlogId));
+      alert("Optimized version saved successfully");
+    } catch (error) {
+      console.error(error);
+      alert("Failed to save optimized version");
     }
   }
 
@@ -803,6 +886,14 @@ export default function Home() {
               >
                 Generate Image Prompts
               </button>
+
+              <button
+                type="button"
+                onClick={handleSaveBlog}
+                className="bg-orange-600 text-white px-5 py-3 rounded-lg"
+              >
+                Save Blog
+              </button>
             </div>
 
             {seoAnalysis && (
@@ -914,6 +1005,58 @@ export default function Home() {
               </div>
             )}
           </section>
+        )}
+      </section>
+
+      <section className="border rounded-xl p-6 space-y-4">
+        <h2 className="text-2xl font-semibold">Saved Blogs</h2>
+
+        {savedBlogs.length === 0 ? (
+          <p className="text-gray-600">No saved blogs yet.</p>
+        ) : (
+          <ul className="space-y-3">
+            {savedBlogs.map((blog) => (
+              <li key={blog.id} className="border rounded-lg p-4">
+                <p><strong>Title:</strong> {blog.title}</p>
+                <p><strong>Keyword:</strong> {blog.keyword}</p>
+                <p><strong>Project ID:</strong> {blog.project_id}</p>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedBlogId(String(blog.id));
+                    loadBlogVersions(blog.id);
+                  }}
+                  className="mt-3 bg-black text-white px-4 py-2 rounded-lg"
+                >
+                  View Versions
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+
+        {blogVersions.length > 0 && (
+          <div className="border rounded-lg p-4 space-y-3">
+            <h3 className="text-xl font-semibold">Blog Versions</h3>
+
+            <ul className="space-y-3">
+              {blogVersions.map((version) => (
+                <li key={version.id} className="border rounded-lg p-3">
+                  <p><strong>Version Label:</strong> {version.version_label}</p>
+                  <p><strong>Blog ID:</strong> {version.blog_id}</p>
+                </li>
+              ))}
+            </ul>
+
+            <button
+              type="button"
+              onClick={handleSaveOptimizedVersion}
+              className="bg-teal-600 text-white px-5 py-3 rounded-lg"
+            >
+              Save Optimized Version
+            </button>
+          </div>
         )}
       </section>
 

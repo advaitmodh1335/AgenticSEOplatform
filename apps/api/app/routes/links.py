@@ -57,7 +57,7 @@ def suggest_internal_links(data: LinkSuggestionRequest, db: Session = Depends(ge
                 "source_type": "knowledge_document",
                 "source_id": doc.id,
                 "anchor_text": anchor_text,
-                "reason": f"Relevant because it overlaps with draft topic and keyword usage (score {score}).",
+                "reason": f"Relevant because it overlaps with draft topic and keyword usage.",
                 "score": score,
             })
 
@@ -87,7 +87,7 @@ def suggest_internal_links(data: LinkSuggestionRequest, db: Session = Depends(ge
                 "source_type": "competitor_scrape",
                 "source_id": scrape.id,
                 "anchor_text": anchor_text,
-                "reason": f"Relevant because the competitor content matches the article topic (score {score}).",
+                "reason": f"Relevant because the competitor content matches the article topic.",
                 "score": score,
             })
 

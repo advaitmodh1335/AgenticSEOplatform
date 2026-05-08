@@ -20,6 +20,7 @@ import {
   optimizeSeo,
   suggestInternalLinks,
   generateHeadlines,
+  generateImagePrompts,
 } from "@/lib/api";
 
 type Project = {
@@ -74,6 +75,8 @@ export default function Home() {
   const [linkSuggestions, setLinkSuggestions] = useState<any[]>([]);
 
   const [headlineVariants, setHeadlineVariants] = useState<any[]>([]);
+
+  const [imagePrompts, setImagePrompts] = useState<any[]>([]);
 
   async function loadProjects() {
     try {
@@ -364,6 +367,31 @@ export default function Home() {
     } catch (error) {
       console.error(error);
       alert("Failed to generate headline variants");
+    }
+  }
+
+  async function handleGenerateImagePrompts() {
+    try {
+      if (!generatedDraft) {
+        alert("Please generate a draft first");
+        return;
+      }
+
+      const selectedProject = projects.find(
+        (project) => project.id === Number(outlineProjectId)
+      );
+
+      const result = await generateImagePrompts({
+        keyword: outlineKeyword,
+        draft: generatedDraft,
+        niche: selectedProject?.niche,
+        audience: selectedProject?.target_audience,
+      });
+
+      setImagePrompts(result.image_prompts || []);
+    } catch (error) {
+      console.error(error);
+      alert("Failed to generate image prompts");
     }
   }
 
@@ -767,6 +795,14 @@ export default function Home() {
               >
                 Generate Headline Variants
               </button>
+
+              <button
+                type="button"
+                onClick={handleGenerateImagePrompts}
+                className="bg-pink-600 text-white px-5 py-3 rounded-lg"
+              >
+                Generate Image Prompts
+              </button>
             </div>
 
             {seoAnalysis && (
@@ -855,6 +891,23 @@ export default function Home() {
                     <div key={index} className="border rounded-lg p-3">
                       <p><strong>Headline:</strong> {item.headline}</p>
                       <p><strong>Score:</strong> {item.score}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {imagePrompts.length > 0 && (
+              <div className="border rounded-lg p-4 space-y-4">
+                <h4 className="text-lg font-semibold">Feature Image Prompt Concepts</h4>
+
+                <div className="space-y-4">
+                  {imagePrompts.map((item, index) => (
+                    <div key={index} className="border rounded-lg p-3">
+                      <p><strong>Concept:</strong> {item.concept_name}</p>
+                      <p><strong>Style:</strong> {item.style}</p>
+                      <p><strong>Aspect Ratio:</strong> {item.aspect_ratio}</p>
+                      <p className="mt-2"><strong>Prompt:</strong> {item.prompt}</p>
                     </div>
                   ))}
                 </div>

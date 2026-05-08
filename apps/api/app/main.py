@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.routes import health, projects, competitors, documents, rag, strategy, content, seo, links, headlines
+from app.routes import health, projects, competitors, documents, rag, strategy, content, seo, links, headlines, images
 from app.db.database import engine
 from app.db.models import Base
 
@@ -29,3 +29,4 @@ app.include_router(content.router)
 app.include_router(seo.router)
 app.include_router(links.router)
 app.include_router(headlines.router)
+app.include_router(images.router)

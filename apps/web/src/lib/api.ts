@@ -283,3 +283,24 @@ export async function generateHeadlines(data: {
 
   return response.json();
 }
+
+export async function generateImagePrompts(data: {
+  keyword: string;
+  draft: any;
+  niche?: string;
+  audience?: string;
+}) {
+  const response = await fetch(`${API_BASE_URL}/images/prompt`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(data),
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to generate image prompts");
+  }
+
+  return response.json();
+}

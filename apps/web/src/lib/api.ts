@@ -264,3 +264,22 @@ export async function suggestInternalLinks(data: {
 
   return response.json();
 }
+
+export async function generateHeadlines(data: {
+  keyword: string;
+  draft: any;
+}) {
+  const response = await fetch(`${API_BASE_URL}/headlines/generate`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(data),
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to generate headlines");
+  }
+
+  return response.json();
+}

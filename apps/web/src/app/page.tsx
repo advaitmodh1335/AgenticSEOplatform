@@ -19,6 +19,7 @@ import {
   analyzeSeo,
   optimizeSeo,
   suggestInternalLinks,
+  generateHeadlines,
 } from "@/lib/api";
 
 type Project = {
@@ -71,6 +72,8 @@ export default function Home() {
   const [optimizedDraft, setOptimizedDraft] = useState<any>(null);
 
   const [linkSuggestions, setLinkSuggestions] = useState<any[]>([]);
+
+  const [headlineVariants, setHeadlineVariants] = useState<any[]>([]);
 
   async function loadProjects() {
     try {
@@ -342,6 +345,25 @@ export default function Home() {
     } catch (error) {
       console.error(error);
       alert("Failed to suggest internal links");
+    }
+  }
+
+  async function handleGenerateHeadlines() {
+    try {
+      if (!generatedDraft) {
+        alert("Please generate a draft first");
+        return;
+      }
+
+      const result = await generateHeadlines({
+        keyword: outlineKeyword,
+        draft: generatedDraft,
+      });
+
+      setHeadlineVariants(result.headlines || []);
+    } catch (error) {
+      console.error(error);
+      alert("Failed to generate headline variants");
     }
   }
 
@@ -737,6 +759,14 @@ export default function Home() {
               >
                 Suggest Internal Links
               </button>
+
+              <button
+                type="button"
+                onClick={handleGenerateHeadlines}
+                className="bg-purple-600 text-white px-5 py-3 rounded-lg"
+              >
+                Generate Headline Variants
+              </button>
             </div>
 
             {seoAnalysis && (
@@ -810,6 +840,21 @@ export default function Home() {
                       <p><strong>Anchor Text:</strong> {link.anchor_text}</p>
                       <p><strong>Reason:</strong> {link.reason}</p>
                       <p><strong>Score:</strong> {link.score}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {headlineVariants.length > 0 && (
+              <div className="border rounded-lg p-4 space-y-4">
+                <h4 className="text-lg font-semibold">Headline Variants</h4>
+
+                <div className="space-y-3">
+                  {headlineVariants.map((item, index) => (
+                    <div key={index} className="border rounded-lg p-3">
+                      <p><strong>Headline:</strong> {item.headline}</p>
+                      <p><strong>Score:</strong> {item.score}</p>
                     </div>
                   ))}
                 </div>

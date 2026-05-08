@@ -244,3 +244,23 @@ export async function optimizeSeo(data: {
 
   return response.json();
 }
+
+export async function suggestInternalLinks(data: {
+  project_id: number;
+  keyword: string;
+  draft: any;
+}) {
+  const response = await fetch(`${API_BASE_URL}/links/suggest`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(data),
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to suggest internal links");
+  }
+
+  return response.json();
+}

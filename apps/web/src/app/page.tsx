@@ -18,6 +18,7 @@ import {
   generateDraft,
   analyzeSeo,
   optimizeSeo,
+  suggestInternalLinks,
 } from "@/lib/api";
 
 type Project = {
@@ -68,6 +69,8 @@ export default function Home() {
 
   const [seoAnalysis, setSeoAnalysis] = useState<any>(null);
   const [optimizedDraft, setOptimizedDraft] = useState<any>(null);
+
+  const [linkSuggestions, setLinkSuggestions] = useState<any[]>([]);
 
   async function loadProjects() {
     try {
@@ -319,6 +322,26 @@ export default function Home() {
     } catch (error) {
       console.error(error);
       alert("Failed to optimize SEO");
+    }
+  }
+
+  async function handleSuggestInternalLinks() {
+    try {
+      if (!generatedDraft) {
+        alert("Please generate a draft first");
+        return;
+      }
+
+      const result = await suggestInternalLinks({
+        project_id: Number(outlineProjectId),
+        keyword: outlineKeyword,
+        draft: generatedDraft,
+      });
+
+      setLinkSuggestions(result.suggestions || []);
+    } catch (error) {
+      console.error(error);
+      alert("Failed to suggest internal links");
     }
   }
 
@@ -690,7 +713,7 @@ export default function Home() {
               <p className="mt-2">{generatedDraft.cta}</p>
             </div>
 
-            <div className="flex gap-3">
+            <div className="flex gap-3 flex-wrap">
               <button
                 type="button"
                 onClick={handleAnalyzeSeo}
@@ -705,6 +728,14 @@ export default function Home() {
                 className="bg-blue-600 text-white px-5 py-3 rounded-lg"
               >
                 Optimize Draft
+              </button>
+
+              <button
+                type="button"
+                onClick={handleSuggestInternalLinks}
+                className="bg-green-600 text-white px-5 py-3 rounded-lg"
+              >
+                Suggest Internal Links
               </button>
             </div>
 
@@ -763,6 +794,24 @@ export default function Home() {
                 <div>
                   <strong>CTA:</strong>
                   <p className="mt-2">{optimizedDraft.cta}</p>
+                </div>
+              </div>
+            )}
+
+            {linkSuggestions.length > 0 && (
+              <div className="border rounded-lg p-4 space-y-4">
+                <h4 className="text-lg font-semibold">Internal Link Suggestions</h4>
+
+                <div className="space-y-3">
+                  {linkSuggestions.map((link, index) => (
+                    <div key={index} className="border rounded-lg p-3">
+                      <p><strong>Target Title:</strong> {link.target_title}</p>
+                      <p><strong>Source Type:</strong> {link.source_type}</p>
+                      <p><strong>Anchor Text:</strong> {link.anchor_text}</p>
+                      <p><strong>Reason:</strong> {link.reason}</p>
+                      <p><strong>Score:</strong> {link.score}</p>
+                    </div>
+                  ))}
                 </div>
               </div>
             )}

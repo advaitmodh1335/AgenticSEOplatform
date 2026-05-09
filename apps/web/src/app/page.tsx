@@ -95,6 +95,9 @@ export default function Home() {
   const [exportedJson, setExportedJson] = useState<any>(null);
   const [exportedMarkdown, setExportedMarkdown] = useState("");
 
+  const [blogSearch, setBlogSearch] = useState("");
+  const [blogFilterProjectId, setBlogFilterProjectId] = useState("");
+
   async function loadProjects() {
     try {
       const data = await getProjects();
@@ -611,7 +614,42 @@ export default function Home() {
     }
   }
 
+  function getBlogStatus(blog: any) {
+    const hasHeadline = !!blog.selected_headline;
+    const hasImagePrompt = !!blog.selected_image_prompt;
+
+    const matchingVersions = blogVersions.filter(
+      (version) => String(version.blog_id) === String(blog.id)
+    );
+
+    const hasOptimizedVersion = matchingVersions.some(
+      (version) => version.version_label === "optimized_draft"
+    );
+
+    if (hasHeadline && hasImagePrompt && hasOptimizedVersion) {
+      return "Ready to Publish";
+    }
+
+    if (hasOptimizedVersion) {
+      return "Optimized";
+    }
+
+    return "Draft";
+  }
+
   const displayedSavedDraft = selectedVersionDraft || selectedBlog?.draft || null;
+
+  const filteredBlogs = savedBlogs.filter((blog) => {
+    const matchesSearch =
+      blog.title.toLowerCase().includes(blogSearch.toLowerCase()) ||
+      blog.keyword.toLowerCase().includes(blogSearch.toLowerCase());
+
+    const matchesProject =
+      !blogFilterProjectId ||
+      String(blog.project_id) === String(blogFilterProjectId);
+
+    return matchesSearch && matchesProject;
+  });
 
   return (
     <main className="min-h-screen p-8 max-w-4xl mx-auto space-y-10">
@@ -1187,16 +1225,53 @@ export default function Home() {
 
       <section className="border rounded-xl p-6 space-y-4">
         <h2 className="text-2xl font-semibold">Saved Blogs</h2>
+        <div className="grid md:grid-cols-2 gap-4">
+          <input
+            className="w-full border rounded-lg p-3"
+            placeholder="Search by blog title or keyword"
+            value={blogSearch}
+            onChange={(e) => setBlogSearch(e.target.value)}
+          />
 
-        {savedBlogs.length === 0 ? (
+          <select
+            className="w-full border rounded-lg p-3"
+            value={blogFilterProjectId}
+            onChange={(e) => setBlogFilterProjectId(e.target.value)}
+          >
+            <option value="">All Projects</option>
+            {projects.map((project) => (
+              <option key={project.id} value={project.id}>
+                {project.name}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {filteredBlogs.length === 0 ? (
           <p className="text-gray-600">No saved blogs yet.</p>
         ) : (
           <ul className="space-y-3">
-            {savedBlogs.map((blog) => (
+            {filteredBlogs.map((blog) => (
               <li key={blog.id} className="border rounded-lg p-4">
-                <p><strong>Title:</strong> {blog.title}</p>
-                <p><strong>Keyword:</strong> {blog.keyword}</p>
-                <p><strong>Project ID:</strong> {blog.project_id}</p>
+                <div className="flex items-start justify-between gap-3 flex-wrap">
+                  <div className="space-y-1">
+                    <p><strong>Title:</strong> {blog.title}</p>
+                    <p><strong>Keyword:</strong> {blog.keyword}</p>
+                    <p><strong>Project ID:</strong> {blog.project_id}</p>
+                  </div>
+
+                  <span
+                    className={`px-3 py-1 rounded-full text-sm font-medium ${
+                      getBlogStatus(blog) === "Ready to Publish"
+                        ? "bg-green-100 text-green-700"
+                        : getBlogStatus(blog) === "Optimized"
+                        ? "bg-blue-100 text-blue-700"
+                        : "bg-yellow-100 text-yellow-700"
+                    }`}
+                  >
+                    {getBlogStatus(blog)}
+                  </span>
+                </div>
 
                 <div className="mt-3 flex gap-3 flex-wrap">
                   <button

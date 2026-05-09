@@ -547,6 +547,70 @@ export default function Home() {
     }
   }
 
+  async function handleCopyMarkdown() {
+    try {
+      if (!exportedMarkdown) {
+        alert("No Markdown available to copy");
+        return;
+      }
+
+      await navigator.clipboard.writeText(exportedMarkdown);
+      alert("Markdown copied successfully");
+    } catch (error) {
+      console.error(error);
+      alert("Failed to copy Markdown");
+    }
+  }
+
+  function handleDownloadMarkdown() {
+    try {
+      if (!exportedMarkdown) {
+        alert("No Markdown available to download");
+        return;
+      }
+
+      const blob = new Blob([exportedMarkdown], { type: "text/markdown" });
+      const url = window.URL.createObjectURL(blob);
+
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `${selectedBlog?.title || "blog-export"}.md`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error(error);
+      alert("Failed to download Markdown");
+    }
+  }
+
+  function handleDownloadJson() {
+    try {
+      if (!exportedJson) {
+        alert("No JSON available to download");
+        return;
+      }
+
+      const jsonString = JSON.stringify(exportedJson, null, 2);
+      const blob = new Blob([jsonString], { type: "application/json" });
+      const url = window.URL.createObjectURL(blob);
+
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `${selectedBlog?.title || "blog-export"}.json`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error(error);
+      alert("Failed to download JSON");
+    }
+  }
+
   const displayedSavedDraft = selectedVersionDraft || selectedBlog?.draft || null;
 
   return (
@@ -1246,7 +1310,18 @@ export default function Home() {
 
         {exportedJson && (
           <div className="border rounded-lg p-4 space-y-3">
-            <h3 className="text-xl font-semibold">Exported JSON</h3>
+            <div className="flex items-center justify-between gap-3 flex-wrap">
+              <h3 className="text-xl font-semibold">Exported JSON</h3>
+
+              <button
+                type="button"
+                onClick={handleDownloadJson}
+                className="bg-black text-white px-4 py-2 rounded-lg"
+              >
+                Download JSON
+              </button>
+            </div>
+
             <pre className="whitespace-pre-wrap break-words text-sm bg-gray-100 p-4 rounded-lg overflow-x-auto">
               {JSON.stringify(exportedJson, null, 2)}
             </pre>
@@ -1255,7 +1330,28 @@ export default function Home() {
 
         {exportedMarkdown && (
           <div className="border rounded-lg p-4 space-y-3">
-            <h3 className="text-xl font-semibold">Exported Markdown</h3>
+            <div className="flex items-center justify-between gap-3 flex-wrap">
+              <h3 className="text-xl font-semibold">Exported Markdown</h3>
+
+              <div className="flex gap-3 flex-wrap">
+                <button
+                  type="button"
+                  onClick={handleCopyMarkdown}
+                  className="bg-black text-white px-4 py-2 rounded-lg"
+                >
+                  Copy Markdown
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleDownloadMarkdown}
+                  className="bg-slate-700 text-white px-4 py-2 rounded-lg"
+                >
+                  Download Markdown
+                </button>
+              </div>
+            </div>
+
             <pre className="whitespace-pre-wrap break-words text-sm bg-gray-100 p-4 rounded-lg overflow-x-auto">
               {exportedMarkdown}
             </pre>

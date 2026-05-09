@@ -3,7 +3,15 @@ from pydantic import BaseModel
 from typing import List
 from sqlalchemy.orm import Session
 from app.db.database import get_db
-from app.db.models import Project
+from app.db.models import (
+    Project,
+    Competitor,
+    CompetitorScrape,
+    KnowledgeDocument,
+    DocumentChunk,
+    Blog,
+    BlogVersion,
+)
 
 router = APIRouter(prefix="/projects", tags=["projects"])
 
@@ -50,3 +58,49 @@ def list_projects(db: Session = Depends(get_db)):
         }
         for project in projects
     ]
+
+
+@router.delete("/{project_id}")
+def delete_project(project_id: int, db: Session = Depends(get_db)):
+    project = db.query(Project).filter(Project.id == project_id).first()
+
+    if not project:
+        return {"message": "Project not found"}
+
+    blog_ids = [
+        blog.id
+        for blog in db.query(Blog).filter(Blog.project_id == project_id).all()
+    ]
+
+    if blog_ids:
+        db.query(BlogVersion).filter(BlogVersion.blog_id.in_(blog_ids)).delete(
+            synchronize_session=False
+        )
+
+    db.query(Blog).filter(Blog.project_id == project_id).delete(
+        synchronize_session=False
+    )
+
+    db.query(DocumentChunk).filter(DocumentChunk.project_id == project_id).delete(
+        synchronize_session=False
+    )
+
+    db.query(CompetitorScrape).filter(CompetitorScrape.project_id == project_id).delete(
+        synchronize_session=False
+    )
+
+    db.query(Competitor).filter(Competitor.project_id == project_id).delete(
+        synchronize_session=False
+    )
+
+    db.query(KnowledgeDocument).filter(KnowledgeDocument.project_id == project_id).delete(
+        synchronize_session=False
+    )
+
+    db.query(Project).filter(Project.id == project_id).delete(
+        synchronize_session=False
+    )
+
+    db.commit()
+
+    return {"message": "Project deleted successfully"}

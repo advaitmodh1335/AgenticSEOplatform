@@ -5,6 +5,7 @@ import {
   checkHealth,
   createProject,
   getProjects,
+  deleteProject,
   createCompetitor,
   scrapeCompetitor,
   getScrapes,
@@ -224,6 +225,50 @@ export default function Home() {
     }
   }
 
+  async function handleDeleteProject(projectId: number) {
+    const confirmed = window.confirm(
+      "Are you sure you want to delete this project?"
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      await deleteProject(projectId);
+
+      if (selectedProjectId === String(projectId)) {
+        setSelectedProjectId("");
+      }
+
+      if (documentProjectId === String(projectId)) {
+        setDocumentProjectId("");
+      }
+
+      if (ragProjectId === String(projectId)) {
+        setRagProjectId("");
+      }
+
+      if (topicProjectId === String(projectId)) {
+        setTopicProjectId("");
+      }
+
+      if (outlineProjectId === String(projectId)) {
+        setOutlineProjectId("");
+      }
+
+      await loadProjects();
+      await loadCompetitors();
+      await loadDocuments();
+      await loadBlogs();
+
+      alert("Project deleted successfully");
+    } catch (error) {
+      console.error(error);
+      alert("Failed to delete project");
+    }
+  }
+
   async function handleCreateCompetitor(e: React.FormEvent) {
     e.preventDefault();
 
@@ -255,7 +300,6 @@ export default function Home() {
   }
 
   async function handleScrapeCompetitor() {
-
     if (!selectedProjectId) {
       alert("Please select a project before scraping");
       return;
@@ -265,12 +309,8 @@ export default function Home() {
       alert("Please enter a competitor URL");
       return;
     }
-    try {
-      if (!selectedProjectId) {
-        alert("Please select a project before scraping");
-        return;
-      }
 
+    try {
       const data = await scrapeCompetitor(
         competitorUrl,
         Number(selectedProjectId)
@@ -318,6 +358,11 @@ export default function Home() {
   }
 
   async function handleBuildIndex() {
+    if (!ragProjectId) {
+      alert("Please select a project");
+      return;
+    }
+
     try {
       const result = await buildRagIndex(Number(ragProjectId));
       alert(`RAG index built successfully with ${result.count} chunks`);
@@ -328,6 +373,11 @@ export default function Home() {
   }
 
   async function handleQueryRag() {
+    if (!ragQuery.trim()) {
+      alert("Please enter a RAG query");
+      return;
+    }
+
     try {
       const result = await queryRag({
         query: ragQuery,
@@ -341,6 +391,11 @@ export default function Home() {
   }
 
   async function handleGetTopicSuggestions() {
+    if (!topicProjectId) {
+      alert("Please select a project");
+      return;
+    }
+
     try {
       const result = await getTopicSuggestions(Number(topicProjectId));
       setTopicSuggestions(result.topics || []);
@@ -400,11 +455,6 @@ export default function Home() {
     }
 
     try {
-      if (!generatedOutline) {
-        alert("Please generate an outline first");
-        return;
-      }
-
       const result = await generateDraft({
         project_id: Number(outlineProjectId),
         topic: outlineTopic,
@@ -763,11 +813,28 @@ export default function Home() {
         ) : (
           <ul className="space-y-3">
             {projects.map((project) => (
-              <li key={project.id} className="border rounded-lg p-4">
-                <p><strong>Name:</strong> {project.name}</p>
-                <p><strong>Niche:</strong> {project.niche}</p>
-                <p><strong>Audience:</strong> {project.target_audience}</p>
-                <p><strong>Keywords:</strong> {project.seed_keywords.join(", ")}</p>
+              <li key={project.id} className="border rounded-lg p-4 space-y-3">
+                <div className="flex items-start justify-between gap-3 flex-wrap">
+                  <div>
+                    <p><strong>Name:</strong> {project.name || "—"}</p>
+                    <p><strong>Niche:</strong> {project.niche || "—"}</p>
+                    <p><strong>Audience:</strong> {project.target_audience || "—"}</p>
+                    <p>
+                      <strong>Keywords:</strong>{" "}
+                      {project.seed_keywords?.length
+                        ? project.seed_keywords.join(", ")
+                        : "—"}
+                    </p>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => handleDeleteProject(project.id)}
+                    className="bg-red-600 text-white px-4 py-2 rounded-lg"
+                  >
+                    Delete Project
+                  </button>
+                </div>
               </li>
             ))}
           </ul>
@@ -783,8 +850,8 @@ export default function Home() {
           <ul className="space-y-3">
             {competitors.map((competitor) => (
               <li key={competitor.id} className="border rounded-lg p-4">
-                <p><strong>Name:</strong> {competitor.name}</p>
-                <p><strong>URL:</strong> {competitor.url}</p>
+                <p><strong>Name:</strong> {competitor.name || "—"}</p>
+                <p><strong>URL:</strong> {competitor.url || "—"}</p>
                 <p><strong>Project ID:</strong> {competitor.project_id}</p>
               </li>
             ))}
@@ -845,8 +912,8 @@ export default function Home() {
             <ul className="space-y-3">
               {documents.map((doc) => (
                 <li key={doc.id} className="border rounded-lg p-4">
-                  <p><strong>Title:</strong> {doc.title}</p>
-                  <p><strong>Type:</strong> {doc.doc_type}</p>
+                  <p><strong>Title:</strong> {doc.title || "—"}</p>
+                  <p><strong>Type:</strong> {doc.doc_type || "—"}</p>
                   <p><strong>Project ID:</strong> {doc.project_id}</p>
                 </li>
               ))}
@@ -899,9 +966,9 @@ export default function Home() {
             <h3 className="text-xl font-semibold">Retrieved Chunks</h3>
             {ragResults.map((result, index) => (
               <div key={index} className="border rounded-lg p-4">
-                <p><strong>Title:</strong> {result.title}</p>
-                <p><strong>Source Type:</strong> {result.source_type}</p>
-                <p><strong>Text:</strong> {result.text}</p>
+                <p><strong>Title:</strong> {result.title || "—"}</p>
+                <p><strong>Source Type:</strong> {result.source_type || "—"}</p>
+                <p><strong>Text:</strong> {result.text || "—"}</p>
               </div>
             ))}
           </div>
@@ -938,9 +1005,9 @@ export default function Home() {
             <ul className="space-y-3">
               {topicSuggestions.map((topic, index) => (
                 <li key={index} className="border rounded-lg p-4">
-                  <p><strong>Title:</strong> {topic.title}</p>
-                  <p><strong>Keyword:</strong> {topic.keyword}</p>
-                  <p><strong>Reason:</strong> {topic.reason}</p>
+                  <p><strong>Title:</strong> {topic.title || "—"}</p>
+                  <p><strong>Keyword:</strong> {topic.keyword || "—"}</p>
+                  <p><strong>Reason:</strong> {topic.reason || "—"}</p>
                 </li>
               ))}
             </ul>
@@ -1000,10 +1067,10 @@ export default function Home() {
           <div className="border rounded-lg p-4 space-y-4">
             <h3 className="text-xl font-semibold">Generated Outline</h3>
 
-            <p><strong>Title:</strong> {generatedOutline.title}</p>
-            <p><strong>Meta Title:</strong> {generatedOutline.meta_title}</p>
-            <p><strong>Meta Description:</strong> {generatedOutline.meta_description}</p>
-            <p><strong>Intro:</strong> {generatedOutline.intro}</p>
+            <p><strong>Title:</strong> {generatedOutline.title || "—"}</p>
+            <p><strong>Meta Title:</strong> {generatedOutline.meta_title || "—"}</p>
+            <p><strong>Meta Description:</strong> {generatedOutline.meta_description || "—"}</p>
+            <p><strong>Intro:</strong> {generatedOutline.intro || "—"}</p>
 
             <div>
               <strong>Sections:</strong>
@@ -1023,7 +1090,7 @@ export default function Home() {
               </ul>
             </div>
 
-            <p><strong>CTA:</strong> {generatedOutline.cta}</p>
+            <p><strong>CTA:</strong> {generatedOutline.cta || "—"}</p>
 
             {generatedOutline.retrieved_context?.length > 0 && (
               <div>
@@ -1031,9 +1098,9 @@ export default function Home() {
                 <ul className="space-y-2 mt-2">
                   {generatedOutline.retrieved_context.map((chunk: any, index: number) => (
                     <li key={index} className="border rounded-lg p-3">
-                      <p><strong>Title:</strong> {chunk.title}</p>
-                      <p><strong>Source Type:</strong> {chunk.source_type}</p>
-                      <p><strong>Text:</strong> {chunk.text}</p>
+                      <p><strong>Title:</strong> {chunk.title || "—"}</p>
+                      <p><strong>Source Type:</strong> {chunk.source_type || "—"}</p>
+                      <p><strong>Text:</strong> {chunk.text || "—"}</p>
                     </li>
                   ))}
                 </ul>
@@ -1046,13 +1113,13 @@ export default function Home() {
           <section className="border rounded-lg p-4 space-y-4">
             <h3 className="text-xl font-semibold">Generated Blog Draft</h3>
 
-            <p><strong>Title:</strong> {generatedDraft.title}</p>
-            <p><strong>Meta Title:</strong> {generatedDraft.meta_title}</p>
-            <p><strong>Meta Description:</strong> {generatedDraft.meta_description}</p>
+            <p><strong>Title:</strong> {generatedDraft.title || "—"}</p>
+            <p><strong>Meta Title:</strong> {generatedDraft.meta_title || "—"}</p>
+            <p><strong>Meta Description:</strong> {generatedDraft.meta_description || "—"}</p>
 
             <div>
               <strong>Introduction:</strong>
-              <p className="mt-2">{generatedDraft.intro}</p>
+              <p className="mt-2">{generatedDraft.intro || "—"}</p>
             </div>
 
             <div>
@@ -1060,8 +1127,8 @@ export default function Home() {
               <div className="space-y-4 mt-2">
                 {generatedDraft.sections.map((section: any, index: number) => (
                   <div key={index} className="border rounded-lg p-3">
-                    <p><strong>{section.heading}</strong></p>
-                    <p className="mt-2">{section.content}</p>
+                    <p><strong>{section.heading || "—"}</strong></p>
+                    <p className="mt-2">{section.content || "—"}</p>
                   </div>
                 ))}
               </div>
@@ -1072,8 +1139,8 @@ export default function Home() {
               <div className="space-y-4 mt-2">
                 {generatedDraft.faq.map((item: any, index: number) => (
                   <div key={index} className="border rounded-lg p-3">
-                    <p><strong>Q:</strong> {item.question}</p>
-                    <p className="mt-2"><strong>A:</strong> {item.answer}</p>
+                    <p><strong>Q:</strong> {item.question || "—"}</p>
+                    <p className="mt-2"><strong>A:</strong> {item.answer || "—"}</p>
                   </div>
                 ))}
               </div>
@@ -1081,7 +1148,7 @@ export default function Home() {
 
             <div>
               <strong>CTA:</strong>
-              <p className="mt-2">{generatedDraft.cta}</p>
+              <p className="mt-2">{generatedDraft.cta || "—"}</p>
             </div>
 
             <div className="flex gap-3 flex-wrap">
@@ -1165,13 +1232,13 @@ export default function Home() {
               <div className="border rounded-lg p-4 space-y-4">
                 <h4 className="text-lg font-semibold">Optimized Draft</h4>
 
-                <p><strong>Title:</strong> {optimizedDraft.title}</p>
-                <p><strong>Meta Title:</strong> {optimizedDraft.meta_title}</p>
-                <p><strong>Meta Description:</strong> {optimizedDraft.meta_description}</p>
+                <p><strong>Title:</strong> {optimizedDraft.title || "—"}</p>
+                <p><strong>Meta Title:</strong> {optimizedDraft.meta_title || "—"}</p>
+                <p><strong>Meta Description:</strong> {optimizedDraft.meta_description || "—"}</p>
 
                 <div>
                   <strong>Introduction:</strong>
-                  <p className="mt-2">{optimizedDraft.intro}</p>
+                  <p className="mt-2">{optimizedDraft.intro || "—"}</p>
                 </div>
 
                 <div>
@@ -1179,8 +1246,8 @@ export default function Home() {
                   <div className="space-y-4 mt-2">
                     {optimizedDraft.sections.map((section: any, index: number) => (
                       <div key={index} className="border rounded-lg p-3">
-                        <p><strong>{section.heading}</strong></p>
-                        <p className="mt-2">{section.content}</p>
+                        <p><strong>{section.heading || "—"}</strong></p>
+                        <p className="mt-2">{section.content || "—"}</p>
                       </div>
                     ))}
                   </div>
@@ -1188,7 +1255,7 @@ export default function Home() {
 
                 <div>
                   <strong>CTA:</strong>
-                  <p className="mt-2">{optimizedDraft.cta}</p>
+                  <p className="mt-2">{optimizedDraft.cta || "—"}</p>
                 </div>
               </div>
             )}
@@ -1200,10 +1267,10 @@ export default function Home() {
                 <div className="space-y-3">
                   {linkSuggestions.map((link, index) => (
                     <div key={index} className="border rounded-lg p-3">
-                      <p><strong>Target Title:</strong> {link.target_title}</p>
-                      <p><strong>Source Type:</strong> {link.source_type}</p>
-                      <p><strong>Anchor Text:</strong> {link.anchor_text}</p>
-                      <p><strong>Reason:</strong> {link.reason}</p>
+                      <p><strong>Target Title:</strong> {link.target_title || "—"}</p>
+                      <p><strong>Source Type:</strong> {link.source_type || "—"}</p>
+                      <p><strong>Anchor Text:</strong> {link.anchor_text || "—"}</p>
+                      <p><strong>Reason:</strong> {link.reason || "—"}</p>
                       <p><strong>Score:</strong> {link.score}</p>
                     </div>
                   ))}
@@ -1218,7 +1285,7 @@ export default function Home() {
                 <div className="space-y-3">
                   {headlineVariants.map((item, index) => (
                     <div key={index} className="border rounded-lg p-3">
-                      <p><strong>Headline:</strong> {item.headline}</p>
+                      <p><strong>Headline:</strong> {item.headline || "—"}</p>
                       <p><strong>Score:</strong> {item.score}</p>
 
                       <button
@@ -1241,10 +1308,10 @@ export default function Home() {
                 <div className="space-y-4">
                   {imagePrompts.map((item, index) => (
                     <div key={index} className="border rounded-lg p-3">
-                      <p><strong>Concept:</strong> {item.concept_name}</p>
-                      <p><strong>Style:</strong> {item.style}</p>
-                      <p><strong>Aspect Ratio:</strong> {item.aspect_ratio}</p>
-                      <p className="mt-2"><strong>Prompt:</strong> {item.prompt}</p>
+                      <p><strong>Concept:</strong> {item.concept_name || "—"}</p>
+                      <p><strong>Style:</strong> {item.style || "—"}</p>
+                      <p><strong>Aspect Ratio:</strong> {item.aspect_ratio || "—"}</p>
+                      <p className="mt-2"><strong>Prompt:</strong> {item.prompt || "—"}</p>
 
                       <button
                         type="button"
@@ -1276,10 +1343,10 @@ export default function Home() {
 
                 {selectedImagePrompt && (
                   <div className="space-y-2">
-                    <p><strong>Chosen Image Concept:</strong> {selectedImagePrompt.concept_name}</p>
-                    <p><strong>Chosen Image Style:</strong> {selectedImagePrompt.style}</p>
-                    <p><strong>Chosen Aspect Ratio:</strong> {selectedImagePrompt.aspect_ratio}</p>
-                    <p><strong>Chosen Image Prompt:</strong> {selectedImagePrompt.prompt}</p>
+                    <p><strong>Chosen Image Concept:</strong> {selectedImagePrompt.concept_name || "—"}</p>
+                    <p><strong>Chosen Image Style:</strong> {selectedImagePrompt.style || "—"}</p>
+                    <p><strong>Chosen Aspect Ratio:</strong> {selectedImagePrompt.aspect_ratio || "—"}</p>
+                    <p><strong>Chosen Image Prompt:</strong> {selectedImagePrompt.prompt || "—"}</p>
                   </div>
                 )}
               </div>
@@ -1290,6 +1357,7 @@ export default function Home() {
 
       <section className="border rounded-xl p-6 space-y-4">
         <h2 className="text-2xl font-semibold">Saved Blogs</h2>
+
         <div className="grid md:grid-cols-2 gap-4">
           <input
             className="w-full border rounded-lg p-3"
@@ -1320,8 +1388,8 @@ export default function Home() {
               <li key={blog.id} className="border rounded-lg p-4">
                 <div className="flex items-start justify-between gap-3 flex-wrap">
                   <div className="space-y-1">
-                    <p><strong>Title:</strong> {blog.title}</p>
-                    <p><strong>Keyword:</strong> {blog.keyword}</p>
+                    <p><strong>Title:</strong> {blog.title || "—"}</p>
+                    <p><strong>Keyword:</strong> {blog.keyword || "—"}</p>
                     <p><strong>Project ID:</strong> {blog.project_id}</p>
                   </div>
 
@@ -1368,10 +1436,10 @@ export default function Home() {
           <div className="border rounded-lg p-4 space-y-4">
             <h3 className="text-xl font-semibold">Saved Blog Content</h3>
 
-            <p><strong>Title:</strong> {selectedBlog.title}</p>
-            <p><strong>Keyword:</strong> {selectedBlog.keyword}</p>
-            <p><strong>Meta Title:</strong> {selectedBlog.meta_title}</p>
-            <p><strong>Meta Description:</strong> {selectedBlog.meta_description}</p>
+            <p><strong>Title:</strong> {selectedBlog.title || "—"}</p>
+            <p><strong>Keyword:</strong> {selectedBlog.keyword || "—"}</p>
+            <p><strong>Meta Title:</strong> {selectedBlog.meta_title || "—"}</p>
+            <p><strong>Meta Description:</strong> {selectedBlog.meta_description || "—"}</p>
 
             {selectedBlog?.selected_headline && (
               <p><strong>Saved Headline Choice:</strong> {selectedBlog.selected_headline}</p>
@@ -1379,10 +1447,10 @@ export default function Home() {
 
             {selectedBlog?.selected_image_prompt && (
               <div className="space-y-2">
-                <p><strong>Saved Image Concept:</strong> {selectedBlog.selected_image_concept_name}</p>
-                <p><strong>Saved Image Style:</strong> {selectedBlog.selected_image_style}</p>
-                <p><strong>Saved Image Aspect Ratio:</strong> {selectedBlog.selected_image_aspect_ratio}</p>
-                <p><strong>Saved Image Prompt:</strong> {selectedBlog.selected_image_prompt}</p>
+                <p><strong>Saved Image Concept:</strong> {selectedBlog.selected_image_concept_name || "—"}</p>
+                <p><strong>Saved Image Style:</strong> {selectedBlog.selected_image_style || "—"}</p>
+                <p><strong>Saved Image Aspect Ratio:</strong> {selectedBlog.selected_image_aspect_ratio || "—"}</p>
+                <p><strong>Saved Image Prompt:</strong> {selectedBlog.selected_image_prompt || "—"}</p>
               </div>
             )}
 
@@ -1399,8 +1467,8 @@ export default function Home() {
                 <div className="space-y-4 mt-2">
                   {displayedSavedDraft.sections.map((section: any, index: number) => (
                     <div key={index} className="border rounded-lg p-3">
-                      <p><strong>{section.heading}</strong></p>
-                      <p className="mt-2">{section.content}</p>
+                      <p><strong>{section.heading || "—"}</strong></p>
+                      <p className="mt-2">{section.content || "—"}</p>
                     </div>
                   ))}
                 </div>
@@ -1413,8 +1481,8 @@ export default function Home() {
                 <div className="space-y-4 mt-2">
                   {displayedSavedDraft.faq.map((item: any, index: number) => (
                     <div key={index} className="border rounded-lg p-3">
-                      <p><strong>Q:</strong> {item.question}</p>
-                      <p className="mt-2"><strong>A:</strong> {item.answer}</p>
+                      <p><strong>Q:</strong> {item.question || "—"}</p>
+                      <p className="mt-2"><strong>A:</strong> {item.answer || "—"}</p>
                     </div>
                   ))}
                 </div>
@@ -1505,7 +1573,7 @@ export default function Home() {
             <ul className="space-y-3">
               {blogVersions.map((version) => (
                 <li key={version.id} className="border rounded-lg p-3">
-                  <p><strong>Version Label:</strong> {version.version_label}</p>
+                  <p><strong>Version Label:</strong> {version.version_label || "—"}</p>
                   <p><strong>Blog ID:</strong> {version.blog_id}</p>
 
                   <button
@@ -1579,13 +1647,8 @@ export default function Home() {
           <div className="border rounded-lg p-4 mt-4 space-y-3">
             <h3 className="text-xl font-semibold">Scrape Result</h3>
 
-            <p>
-              <strong>Title:</strong> {scrapeResult.title}
-            </p>
-
-            <p>
-              <strong>Meta Description:</strong> {scrapeResult.meta_description}
-            </p>
+            <p><strong>Title:</strong> {scrapeResult.title || "—"}</p>
+            <p><strong>Meta Description:</strong> {scrapeResult.meta_description || "—"}</p>
 
             <div>
               <strong>Headings:</strong>
@@ -1614,15 +1677,9 @@ export default function Home() {
             <ul className="space-y-3">
               {scrapeHistory.map((scrape) => (
                 <li key={scrape.id} className="border rounded-lg p-3">
-                  <p>
-                    <strong>Title:</strong> {scrape.title}
-                  </p>
-                  <p>
-                    <strong>URL:</strong> {scrape.url}
-                  </p>
-                  <p>
-                    <strong>Meta Description:</strong> {scrape.meta_description}
-                  </p>
+                  <p><strong>Title:</strong> {scrape.title || "—"}</p>
+                  <p><strong>URL:</strong> {scrape.url || "—"}</p>
+                  <p><strong>Meta Description:</strong> {scrape.meta_description || "—"}</p>
                 </li>
               ))}
             </ul>

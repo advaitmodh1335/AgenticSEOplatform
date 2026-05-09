@@ -29,6 +29,18 @@ export async function getProjects() {
   return response.json();
 }
 
+export async function deleteProject(projectId: number) {
+  const response = await fetch(`${API_BASE_URL}/projects/${projectId}`, {
+    method: "DELETE",
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to delete project");
+  }
+
+  return response.json();
+}
+
 export async function createCompetitor(data: {
   project_id: number;
   name: string;

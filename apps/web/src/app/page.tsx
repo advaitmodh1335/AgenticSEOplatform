@@ -26,6 +26,8 @@ import {
   getBlog,
   createBlogVersion,
   getBlogVersions,
+  exportBlogJson,
+  exportBlogMarkdown,
 } from "@/lib/api";
 
 type Project = {
@@ -90,6 +92,9 @@ export default function Home() {
   const [selectedBlog, setSelectedBlog] = useState<any>(null);
   const [selectedVersionDraft, setSelectedVersionDraft] = useState<any>(null);
 
+  const [exportedJson, setExportedJson] = useState<any>(null);
+  const [exportedMarkdown, setExportedMarkdown] = useState("");
+
   async function loadProjects() {
     try {
       const data = await getProjects();
@@ -150,6 +155,8 @@ export default function Home() {
       setSelectedBlog(data);
       setSelectedVersionDraft(null);
       setSelectedBlogId(String(blogId));
+      setExportedJson(null);
+      setExportedMarkdown("");
       await loadBlogVersions(blogId);
     } catch (error) {
       console.error(error);
@@ -507,6 +514,36 @@ export default function Home() {
     } catch (error) {
       console.error(error);
       alert("Failed to save optimized version");
+    }
+  }
+
+  async function handleExportJson() {
+    try {
+      if (!selectedBlogId) {
+        alert("Please open a saved blog first");
+        return;
+      }
+
+      const data = await exportBlogJson(Number(selectedBlogId));
+      setExportedJson(data);
+    } catch (error) {
+      console.error(error);
+      alert("Failed to export JSON");
+    }
+  }
+
+  async function handleExportMarkdown() {
+    try {
+      if (!selectedBlogId) {
+        alert("Please open a saved blog first");
+        return;
+      }
+
+      const data = await exportBlogMarkdown(Number(selectedBlogId));
+      setExportedMarkdown(data.markdown || "");
+    } catch (error) {
+      console.error(error);
+      alert("Failed to export Markdown");
     }
   }
 
@@ -1186,6 +1223,42 @@ export default function Home() {
                 <p className="mt-2">{displayedSavedDraft.cta}</p>
               </div>
             )}
+
+            <div className="flex gap-3 flex-wrap">
+              <button
+                type="button"
+                onClick={handleExportJson}
+                className="bg-black text-white px-4 py-2 rounded-lg"
+              >
+                Export JSON
+              </button>
+
+              <button
+                type="button"
+                onClick={handleExportMarkdown}
+                className="bg-slate-700 text-white px-4 py-2 rounded-lg"
+              >
+                Export Markdown
+              </button>
+            </div>
+          </div>
+        )}
+
+        {exportedJson && (
+          <div className="border rounded-lg p-4 space-y-3">
+            <h3 className="text-xl font-semibold">Exported JSON</h3>
+            <pre className="whitespace-pre-wrap break-words text-sm bg-gray-100 p-4 rounded-lg overflow-x-auto">
+              {JSON.stringify(exportedJson, null, 2)}
+            </pre>
+          </div>
+        )}
+
+        {exportedMarkdown && (
+          <div className="border rounded-lg p-4 space-y-3">
+            <h3 className="text-xl font-semibold">Exported Markdown</h3>
+            <pre className="whitespace-pre-wrap break-words text-sm bg-gray-100 p-4 rounded-lg overflow-x-auto">
+              {exportedMarkdown}
+            </pre>
           </div>
         )}
 

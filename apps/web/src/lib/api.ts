@@ -409,3 +409,23 @@ export async function updateBlogSelections(
 
   return response.json();
 }
+
+export async function exportBlogJson(blogId: number) {
+  const response = await fetch(`${API_BASE_URL}/blogs/${blogId}/export/json`);
+
+  if (!response.ok) {
+    throw new Error("Failed to export blog JSON");
+  }
+
+  return response.json();
+}
+
+export async function exportBlogMarkdown(blogId: number) {
+  const response = await fetch(`${API_BASE_URL}/blogs/${blogId}/export/markdown`);
+
+  if (!response.ok) {
+    throw new Error("Failed to export blog Markdown");
+  }
+
+  return response.json();
+}

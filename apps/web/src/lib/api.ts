@@ -314,6 +314,11 @@ export async function createBlog(data: {
   intro?: string;
   cta?: string;
   draft: any;
+  selected_headline?: string;
+  selected_image_prompt?: string;
+  selected_image_concept_name?: string;
+  selected_image_style?: string;
+  selected_image_aspect_ratio?: string;
 }) {
   const response = await fetch(`${API_BASE_URL}/blogs`, {
     method: "POST",
@@ -375,6 +380,31 @@ export async function getBlogVersions(blogId: number) {
 
   if (!response.ok) {
     throw new Error("Failed to fetch blog versions");
+  }
+
+  return response.json();
+}
+
+export async function updateBlogSelections(
+  blogId: number,
+  data: {
+    selected_headline?: string;
+    selected_image_prompt?: string;
+    selected_image_concept_name?: string;
+    selected_image_style?: string;
+    selected_image_aspect_ratio?: string;
+  }
+) {
+  const response = await fetch(`${API_BASE_URL}/blogs/${blogId}/selections`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(data),
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to update blog selections");
   }
 
   return response.json();

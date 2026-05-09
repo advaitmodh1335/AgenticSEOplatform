@@ -64,6 +64,12 @@ class Blog(Base):
     cta = Column(Text, nullable=True)
     draft_json = Column(Text, nullable=False)
 
+    selected_headline = Column(Text, nullable=True)
+    selected_image_prompt = Column(Text, nullable=True)
+    selected_image_concept_name = Column(String, nullable=True)
+    selected_image_style = Column(String, nullable=True)
+    selected_image_aspect_ratio = Column(String, nullable=True)
+
 
 class BlogVersion(Base):
     __tablename__ = "blog_versions"

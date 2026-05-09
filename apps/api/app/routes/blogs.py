@@ -17,6 +17,11 @@ class BlogCreate(BaseModel):
     intro: str | None = None
     cta: str | None = None
     draft: dict
+    selected_headline: str | None = None
+    selected_image_prompt: str | None = None
+    selected_image_concept_name: str | None = None
+    selected_image_style: str | None = None
+    selected_image_aspect_ratio: str | None = None
 
 
 class BlogVersionCreate(BaseModel):
@@ -24,6 +29,12 @@ class BlogVersionCreate(BaseModel):
     version_label: str
     draft: dict
 
+class BlogUpdateSelections(BaseModel):
+    selected_headline: str | None = None
+    selected_image_prompt: str | None = None
+    selected_image_concept_name: str | None = None
+    selected_image_style: str | None = None
+    selected_image_aspect_ratio: str | None = None
 
 @router.post("")
 def create_blog(data: BlogCreate, db: Session = Depends(get_db)):
@@ -36,6 +47,11 @@ def create_blog(data: BlogCreate, db: Session = Depends(get_db)):
         intro=data.intro,
         cta=data.cta,
         draft_json=json.dumps(data.draft),
+        selected_headline=data.selected_headline,
+        selected_image_prompt=data.selected_image_prompt,
+        selected_image_concept_name=data.selected_image_concept_name,
+        selected_image_style=data.selected_image_style,
+        selected_image_aspect_ratio=data.selected_image_aspect_ratio,
     )
     db.add(new_blog)
     db.commit()
@@ -59,6 +75,11 @@ def create_blog(data: BlogCreate, db: Session = Depends(get_db)):
         "intro": new_blog.intro,
         "cta": new_blog.cta,
         "draft": data.draft,
+        "selected_headline": new_blog.selected_headline,
+        "selected_image_prompt": new_blog.selected_image_prompt,
+        "selected_image_concept_name": new_blog.selected_image_concept_name,
+        "selected_image_style": new_blog.selected_image_style,
+        "selected_image_aspect_ratio": new_blog.selected_image_aspect_ratio,
     }
 
 
@@ -96,6 +117,11 @@ def get_blog(blog_id: int, db: Session = Depends(get_db)):
         "intro": blog.intro,
         "cta": blog.cta,
         "draft": json.loads(blog.draft_json),
+        "selected_headline": blog.selected_headline,
+        "selected_image_prompt": blog.selected_image_prompt,
+        "selected_image_concept_name": blog.selected_image_concept_name,
+        "selected_image_style": blog.selected_image_style,
+        "selected_image_aspect_ratio": blog.selected_image_aspect_ratio,
     }
 
 
@@ -120,7 +146,12 @@ def create_blog_version(data: BlogVersionCreate, db: Session = Depends(get_db)):
 
 @router.get("/{blog_id}/versions")
 def list_blog_versions(blog_id: int, db: Session = Depends(get_db)):
-    versions = db.query(BlogVersion).filter(BlogVersion.blog_id == blog_id).all()
+    versions = (
+        db.query(BlogVersion)
+        .filter(BlogVersion.blog_id == blog_id)
+        .order_by(BlogVersion.id.desc())
+        .all()
+    )
 
     return [
         {
@@ -131,3 +162,28 @@ def list_blog_versions(blog_id: int, db: Session = Depends(get_db)):
         }
         for version in versions
     ]
+
+@router.put("/{blog_id}/selections")
+def update_blog_selections(blog_id: int, data: BlogUpdateSelections, db: Session = Depends(get_db)):
+    blog = db.query(Blog).filter(Blog.id == blog_id).first()
+
+    if not blog:
+        return {"message": "Blog not found"}
+
+    blog.selected_headline = data.selected_headline
+    blog.selected_image_prompt = data.selected_image_prompt
+    blog.selected_image_concept_name = data.selected_image_concept_name
+    blog.selected_image_style = data.selected_image_style
+    blog.selected_image_aspect_ratio = data.selected_image_aspect_ratio
+
+    db.commit()
+    db.refresh(blog)
+
+    return {
+        "id": blog.id,
+        "selected_headline": blog.selected_headline,
+        "selected_image_prompt": blog.selected_image_prompt,
+        "selected_image_concept_name": blog.selected_image_concept_name,
+        "selected_image_style": blog.selected_image_style,
+        "selected_image_aspect_ratio": blog.selected_image_aspect_ratio,
+    }

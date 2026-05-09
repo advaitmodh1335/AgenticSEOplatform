@@ -23,6 +23,7 @@ import {
   generateImagePrompts,
   createBlog,
   getBlogs,
+  getBlog,
   createBlogVersion,
   getBlogVersions,
 } from "@/lib/api";
@@ -80,9 +81,14 @@ export default function Home() {
   const [headlineVariants, setHeadlineVariants] = useState<any[]>([]);
   const [imagePrompts, setImagePrompts] = useState<any[]>([]);
 
+  const [selectedHeadline, setSelectedHeadline] = useState<string>("");
+  const [selectedImagePrompt, setSelectedImagePrompt] = useState<any>(null);
+
   const [savedBlogs, setSavedBlogs] = useState<any[]>([]);
   const [selectedBlogId, setSelectedBlogId] = useState("");
   const [blogVersions, setBlogVersions] = useState<any[]>([]);
+  const [selectedBlog, setSelectedBlog] = useState<any>(null);
+  const [selectedVersionDraft, setSelectedVersionDraft] = useState<any>(null);
 
   async function loadProjects() {
     try {
@@ -136,6 +142,23 @@ export default function Home() {
     } catch (error) {
       console.error(error);
     }
+  }
+
+  async function handleViewBlog(blogId: number) {
+    try {
+      const data = await getBlog(blogId);
+      setSelectedBlog(data);
+      setSelectedVersionDraft(null);
+      setSelectedBlogId(String(blogId));
+      await loadBlogVersions(blogId);
+    } catch (error) {
+      console.error(error);
+      alert("Failed to load saved blog");
+    }
+  }
+
+  function handleViewVersion(versionDraft: any) {
+    setSelectedVersionDraft(versionDraft);
   }
 
   useEffect(() => {
@@ -292,6 +315,8 @@ export default function Home() {
       setLinkSuggestions([]);
       setHeadlineVariants([]);
       setImagePrompts([]);
+      setSelectedHeadline("");
+      setSelectedImagePrompt(null);
     } catch (error) {
       console.error(error);
       alert("Failed to generate outline");
@@ -318,6 +343,8 @@ export default function Home() {
       setLinkSuggestions([]);
       setHeadlineVariants([]);
       setImagePrompts([]);
+      setSelectedHeadline("");
+      setSelectedImagePrompt(null);
     } catch (error) {
       console.error(error);
       alert("Failed to generate draft");
@@ -442,6 +469,11 @@ export default function Home() {
         intro: generatedDraft.intro,
         cta: generatedDraft.cta,
         draft: generatedDraft,
+        selected_headline: selectedHeadline || undefined,
+        selected_image_prompt: selectedImagePrompt?.prompt,
+        selected_image_concept_name: selectedImagePrompt?.concept_name,
+        selected_image_style: selectedImagePrompt?.style,
+        selected_image_aspect_ratio: selectedImagePrompt?.aspect_ratio,
       });
 
       await loadBlogs();
@@ -477,6 +509,8 @@ export default function Home() {
       alert("Failed to save optimized version");
     }
   }
+
+  const displayedSavedDraft = selectedVersionDraft || selectedBlog?.draft || null;
 
   return (
     <main className="min-h-screen p-8 max-w-4xl mx-auto space-y-10">
@@ -982,6 +1016,14 @@ export default function Home() {
                     <div key={index} className="border rounded-lg p-3">
                       <p><strong>Headline:</strong> {item.headline}</p>
                       <p><strong>Score:</strong> {item.score}</p>
+
+                      <button
+                        type="button"
+                        onClick={() => setSelectedHeadline(item.headline)}
+                        className="mt-3 bg-black text-white px-4 py-2 rounded-lg"
+                      >
+                        Choose This Headline
+                      </button>
                     </div>
                   ))}
                 </div>
@@ -999,9 +1041,43 @@ export default function Home() {
                       <p><strong>Style:</strong> {item.style}</p>
                       <p><strong>Aspect Ratio:</strong> {item.aspect_ratio}</p>
                       <p className="mt-2"><strong>Prompt:</strong> {item.prompt}</p>
+
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setSelectedImagePrompt({
+                            prompt: item.prompt,
+                            concept_name: item.concept_name,
+                            style: item.style,
+                            aspect_ratio: item.aspect_ratio,
+                          })
+                        }
+                        className="mt-3 bg-black text-white px-4 py-2 rounded-lg"
+                      >
+                        Choose This Image Prompt
+                      </button>
                     </div>
                   ))}
                 </div>
+              </div>
+            )}
+
+            {(selectedHeadline || selectedImagePrompt) && (
+              <div className="border rounded-lg p-4 space-y-4">
+                <h4 className="text-lg font-semibold">Selected Publishing Choices</h4>
+
+                {selectedHeadline && (
+                  <p><strong>Chosen Headline:</strong> {selectedHeadline}</p>
+                )}
+
+                {selectedImagePrompt && (
+                  <div className="space-y-2">
+                    <p><strong>Chosen Image Concept:</strong> {selectedImagePrompt.concept_name}</p>
+                    <p><strong>Chosen Image Style:</strong> {selectedImagePrompt.style}</p>
+                    <p><strong>Chosen Aspect Ratio:</strong> {selectedImagePrompt.aspect_ratio}</p>
+                    <p><strong>Chosen Image Prompt:</strong> {selectedImagePrompt.prompt}</p>
+                  </div>
+                )}
               </div>
             )}
           </section>
@@ -1021,19 +1097,96 @@ export default function Home() {
                 <p><strong>Keyword:</strong> {blog.keyword}</p>
                 <p><strong>Project ID:</strong> {blog.project_id}</p>
 
-                <button
-                  type="button"
-                  onClick={() => {
-                    setSelectedBlogId(String(blog.id));
-                    loadBlogVersions(blog.id);
-                  }}
-                  className="mt-3 bg-black text-white px-4 py-2 rounded-lg"
-                >
-                  View Versions
-                </button>
+                <div className="mt-3 flex gap-3 flex-wrap">
+                  <button
+                    type="button"
+                    onClick={() => handleViewBlog(blog.id)}
+                    className="bg-black text-white px-4 py-2 rounded-lg"
+                  >
+                    Open Blog
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedBlogId(String(blog.id));
+                      setSelectedVersionDraft(null);
+                      loadBlogVersions(blog.id);
+                    }}
+                    className="bg-slate-700 text-white px-4 py-2 rounded-lg"
+                  >
+                    View Versions
+                  </button>
+                </div>
               </li>
             ))}
           </ul>
+        )}
+
+        {selectedBlog && (
+          <div className="border rounded-lg p-4 space-y-4">
+            <h3 className="text-xl font-semibold">Saved Blog Content</h3>
+
+            <p><strong>Title:</strong> {selectedBlog.title}</p>
+            <p><strong>Keyword:</strong> {selectedBlog.keyword}</p>
+            <p><strong>Meta Title:</strong> {selectedBlog.meta_title}</p>
+            <p><strong>Meta Description:</strong> {selectedBlog.meta_description}</p>
+
+            {selectedBlog?.selected_headline && (
+              <p><strong>Saved Headline Choice:</strong> {selectedBlog.selected_headline}</p>
+            )}
+
+            {selectedBlog?.selected_image_prompt && (
+              <div className="space-y-2">
+                <p><strong>Saved Image Concept:</strong> {selectedBlog.selected_image_concept_name}</p>
+                <p><strong>Saved Image Style:</strong> {selectedBlog.selected_image_style}</p>
+                <p><strong>Saved Image Aspect Ratio:</strong> {selectedBlog.selected_image_aspect_ratio}</p>
+                <p><strong>Saved Image Prompt:</strong> {selectedBlog.selected_image_prompt}</p>
+              </div>
+            )}
+
+            {displayedSavedDraft?.intro && (
+              <div>
+                <strong>Introduction:</strong>
+                <p className="mt-2">{displayedSavedDraft.intro}</p>
+              </div>
+            )}
+
+            {displayedSavedDraft?.sections?.length > 0 && (
+              <div>
+                <strong>Sections:</strong>
+                <div className="space-y-4 mt-2">
+                  {displayedSavedDraft.sections.map((section: any, index: number) => (
+                    <div key={index} className="border rounded-lg p-3">
+                      <p><strong>{section.heading}</strong></p>
+                      <p className="mt-2">{section.content}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {displayedSavedDraft?.faq?.length > 0 && (
+              <div>
+                <strong>FAQ:</strong>
+                <div className="space-y-4 mt-2">
+                  {displayedSavedDraft.faq.map((item: any, index: number) => (
+                    <div key={index} className="border rounded-lg p-3">
+                      <p><strong>Q:</strong> {item.question}</p>
+                      <p className="mt-2"><strong>A:</strong> {item.answer}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {displayedSavedDraft?.cta && (
+              <div>
+                <strong>CTA:</strong>
+                <p className="mt-2">{displayedSavedDraft.cta}</p>
+              </div>
+            )}
+          </div>
         )}
 
         {blogVersions.length > 0 && (
@@ -1045,6 +1198,14 @@ export default function Home() {
                 <li key={version.id} className="border rounded-lg p-3">
                   <p><strong>Version Label:</strong> {version.version_label}</p>
                   <p><strong>Blog ID:</strong> {version.blog_id}</p>
+
+                  <button
+                    type="button"
+                    onClick={() => handleViewVersion(version.draft)}
+                    className="mt-3 bg-slate-700 text-white px-4 py-2 rounded-lg"
+                  >
+                    View This Version
+                  </button>
                 </li>
               ))}
             </ul>

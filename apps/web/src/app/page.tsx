@@ -192,6 +192,16 @@ export default function Home() {
   async function handleCreateProject(e: React.FormEvent) {
     e.preventDefault();
 
+    if (
+      !projectName.trim() ||
+      !niche.trim() ||
+      !targetAudience.trim() ||
+      !seedKeywords.trim()
+    ) {
+      alert("Please fill in all project fields");
+      return;
+    }
+
     try {
       await createProject({
         name: projectName,
@@ -217,6 +227,16 @@ export default function Home() {
   async function handleCreateCompetitor(e: React.FormEvent) {
     e.preventDefault();
 
+    if (!selectedProjectId) {
+      alert("Please select a project");
+      return;
+    }
+
+    if (!competitorName.trim() || !competitorUrl.trim()) {
+      alert("Please fill in all competitor fields");
+      return;
+    }
+
     try {
       await createCompetitor({
         project_id: Number(selectedProjectId),
@@ -235,6 +255,16 @@ export default function Home() {
   }
 
   async function handleScrapeCompetitor() {
+
+    if (!selectedProjectId) {
+      alert("Please select a project before scraping");
+      return;
+    }
+
+    if (!competitorUrl.trim()) {
+      alert("Please enter a competitor URL");
+      return;
+    }
     try {
       if (!selectedProjectId) {
         alert("Please select a project before scraping");
@@ -256,6 +286,16 @@ export default function Home() {
 
   async function handleCreateDocument(e: React.FormEvent) {
     e.preventDefault();
+
+    if (!documentProjectId) {
+      alert("Please select a project");
+      return;
+    }
+
+    if (!documentTitle.trim() || !documentContent.trim()) {
+      alert("Please fill in all document fields");
+      return;
+    }
 
     try {
       await createDocument({
@@ -311,6 +351,16 @@ export default function Home() {
   }
 
   async function handleGenerateOutline() {
+    if (!outlineProjectId) {
+      alert("Please select a project");
+      return;
+    }
+
+    if (!outlineTopic.trim() || !outlineKeyword.trim()) {
+      alert("Please fill in topic and keyword");
+      return;
+    }
+
     try {
       const result = await generateOutline({
         project_id: Number(outlineProjectId),
@@ -334,6 +384,21 @@ export default function Home() {
   }
 
   async function handleGenerateDraft() {
+    if (!outlineProjectId) {
+      alert("Please select a project");
+      return;
+    }
+
+    if (!outlineTopic.trim() || !outlineKeyword.trim()) {
+      alert("Please fill in topic and keyword");
+      return;
+    }
+
+    if (!generatedOutline) {
+      alert("Please generate an outline first");
+      return;
+    }
+
     try {
       if (!generatedOutline) {
         alert("Please generate an outline first");

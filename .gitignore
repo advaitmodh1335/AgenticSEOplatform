@@ -33,3 +33,10 @@ data/exports/*
 
 # OS
 .DS_Store
+
+.venv/
+__pycache__/
+*.pyc
+faiss_index.bin
+faiss_metadata.pkl
+*.db
